@@ -1,0 +1,55 @@
+/* ProjectPreview.css */
+.project-card {
+  background-color: #374151;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 16px;
+  margin-bottom: 16px;
+  color: white;
+}
+
+.project-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.project-description {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.project-owner {
+  display: block;
+  font-size: 0.875rem;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.project-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.project-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.project-action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.project-action-btn:hover {
+  background-color: #3b82f6;
+}

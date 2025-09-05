@@ -1,0 +1,133 @@
+/* Profile.css - Main profile page styles */
+.profile-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #111827;
+  color: #e5e7eb;
+}
+
+.profile-content {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #374151;
+}
+
+.profile-header h1 {
+  color: #f9fafb;
+  font-size: 28px;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.primary-btn, .secondary-btn, .icon-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.primary-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.primary-btn:hover {
+  background-color: #2563eb;
+}
+
+.secondary-btn {
+  background-color: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+}
+
+.secondary-btn:hover {
+  background-color: #4b5563;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: white;
+  font-size: 18px;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+}
+
+.profile-left, .profile-right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section-card {
+  background: #1f2937;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  border: 1px solid #374151;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  color: #f9fafb;
+  margin: 0;
+  font-size: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .primary-btn, .secondary-btn {
+    width: 100%;
+  }
+}

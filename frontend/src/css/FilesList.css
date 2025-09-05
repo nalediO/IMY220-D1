@@ -1,0 +1,36 @@
+/* FilesList.css */
+.files-list {
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.files-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.file-section{
+    padding: 20px;
+    border-bottom: 1px solid #eaeaea;
+    background-color: #111827;
+    color: white;
+}
+
+.file-item {
+  padding: 10px 12px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.file-item:hover {
+  background-color: #64a8ec;
+    color: black;
+}
+
+.file-item:active {
+  background-color: #64a8ec;
+    color: black;
+}

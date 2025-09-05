@@ -1,0 +1,13 @@
+
+.projects-page {
+  padding: 24px;
+  background-color: #111827;
+  min-height: 100vh;
+}
+
+.projects-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #afafaf;
+}

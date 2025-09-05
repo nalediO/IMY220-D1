@@ -1,0 +1,69 @@
+/* ProjectList.css */
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-card {
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 16px;
+  transition: box-shadow 0.2s;
+  background-color: #1f2937;
+}
+
+.project-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.project-card h3 {
+  margin: 0 0 8px 0;
+  color: #f9fafb;
+}
+
+.project-card p {
+  margin: 0 0 12px 0;
+  color: #d1d5db;
+}
+
+.project-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.project-status {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.project-contributors {
+  color: #9ca3af;
+}
+
+.project-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.project-action-btn {
+  padding: 6px 12px;
+  background-color: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.project-action-btn:hover {
+  background-color: #4b5563;
+}
+
+.project-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
