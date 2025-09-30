@@ -1,38 +1,41 @@
-const express = require("express");
+const express = require('express');
+const cors = require('cors');
+const path = require("path");
+const connectDB = require('./config/database');
+require('dotenv').config();
+
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const projectRoutes = require('./routes/Projects');
+const checkinRoutes = require('./routes/checkins');
+const friendRoutes = require('./routes/friends');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-const cors = require('cors');
-app.use(cors({
-  origin: 'http://localhost:8080',
-  credentials: true
-}));
+// Connect to database
+connectDB();
 
-app.use(express.json());
-
-app.post("/api/signup", (req, res) => {
-  console.log("Received signup data:", req.body);
-  res.json({
-    message: `Hello ${req.body.username}, your signup was successful (stubbed)!`
-  });
-});
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 
-app.post("/api/login", (req, res) => {
-  console.log("Received login data:", req.body);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/checkins', checkinRoutes);
+app.use('/api/friends', friendRoutes);
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-  if (req.body.email && req.body.password) {
-    res.json({
-      message: `Welcome back, ${req.body.email} (stubbed)!`,
-      token: "dummy-token-12345" 
-    });
-  } else {
-    res.status(400).json({ message: "Email and password required" });
-  }
+app.get('/api/health', (req, res) => {
+  res.json({ message: 'Server is running!' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

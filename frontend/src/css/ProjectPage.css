@@ -1,95 +1,200 @@
 /* ProjectPage.css */
 .project-page {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background-color: #111827;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .main-content {
-  display: flex;
   flex: 1;
-  padding: 20px;
-  gap: 20px;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.project-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.project-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.project-meta span {
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.edit-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .project-body {
-  display: flex;
-  flex: 1;
-  background:#111827;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
 }
 
 .files-section {
-  width: 250px;
-  border-right: 1px solid #eaeaea;
-  padding: 20px;
-  background-color: #242f49;
-  color: white;
-  margin-right:20px;
-  border-radius: 10px;
-}
-
-.files-section h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: fit-content;
 }
 
 .content-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 2rem;
 }
 
 .file-preview {
-  padding: 20px;
-  border-bottom: 1px solid #eaeaea;
-  background-color: #242f49;
-  margin-bottom: 10px;
-  border-radius: 10px;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.file-title {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.file-textarea {
+.file-content {
   width: 95%;
-  border: 1px solid #ddd;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.9rem;
+  padding: 1rem;
+  border: 1px solid #e9ecef;
   border-radius: 4px;
-  padding: 12px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: none;
-  background-color: #f8f9fa;
-  min-height: 200px;
+  resize: vertical;
+  min-height: 300px;
 }
 
-.no-file {
-  padding: 40px 20px;
-  border-radius: 30px;
-  margin: 20px;
+.no-file-selected {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 2rem;
   text-align: center;
-  color: white;
-  font-style: italic;
-  background-color: #242f49;
+  color: #6c757d;
 }
 
-.messages-section {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-  background-color: #242f49;
-  border-radius: 20px;
+.checkins-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.checkin-input {
+  margin-bottom: 1.5rem;
+
+}
+
+.checkin-input textarea {
+  width: 95%;
+  padding: 0.75rem;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.checkin-input button {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.checkin-item {
+  border-bottom: 1px solid #f1f3f4;
+  padding: 1rem 0;
+}
+
+.checkin-item:last-child {
+  border-bottom: none;
+}
+
+.checkin-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.checkin-header .user {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.checkin-header .version {
+  background: #007bff;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.checkin-header .date {
+  color: #6c757d;
+  margin-left: auto;
+}
+
+.checkin-message {
+  margin: 0 0 0.5rem 0;
+  color: #34495e;
+}
+
+.checkin-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.checkin-files strong {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.file-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .project-body {
+    grid-template-columns: 1fr;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .project-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .checkin-header {
+    flex-wrap: wrap;
+  }
 }

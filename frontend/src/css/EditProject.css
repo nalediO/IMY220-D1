@@ -1,4 +1,4 @@
-/* EditProject.css */
+/* src/css/EditProject.css */
 .edit-project-form {
   background-color: #fff;
   padding: 20px;
@@ -24,7 +24,7 @@
 
 .edit-input,
 .edit-textarea {
-  width: 100%;
+  width: 95%;
   padding: 8px 10px;
   margin-top: 6px;
   border: 1px solid #ccc;
@@ -69,4 +69,48 @@
 
 .btn-save:hover {
   background-color: #1e3a8a;
+}
+
+.existing-files {
+  margin-bottom: 16px;
+}
+
+.existing-files h4 {
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.existing-files ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.existing-files li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.remove-file-btn {
+  background-color: #ef4444;
+  color: white;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+.remove-file-btn:hover {
+  background-color: #dc2626;
+}
+
+.current-image {
+  margin-bottom: 10px;
+}
+
+.current-image img {
+  border-radius: 6px;
+  border: 1px solid #ddd;
 }

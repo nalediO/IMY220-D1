@@ -1,37 +1,50 @@
 import React from "react";
-import "../css/ProfileInfo.css"
+import "../css/ProfileInfo.css";
 
 const ProfileInfo = ({ user, onEdit }) => {
+  if (!user) return null;
+
+  const firstLetter = user.firstName?.charAt(0) || "";
+  const lastLetter = user.lastName?.charAt(0) || "";
+
+  const birthday = user.birthday ? new Date(user.birthday).toLocaleDateString() : "N/A";
+  const programmingLanguages = user.programmingLanguages?.length
+    ? user.programmingLanguages.join(", ")
+    : "None";
+
   return (
     <div className="profile-info-card">
       <div className="profile-header">
         <div className="avatar">
-          {user.profilePic ? (
-            <img src={user.profilePic} alt="Profile" />
+          {user.profileImage ? (
+            <img src={user.profileImage} alt="Profile" />
           ) : (
-            <div className="avatar-placeholder1">
-              {user.name.charAt(0)}{user.surname.charAt(0)}
-            </div>
+            <div className="avatar-placeholder1">{firstLetter}{lastLetter}</div>
           )}
         </div>
-        <h2>{user.name} {user.surname}</h2>
-        <p className="username">@{user.username}</p>
+        <h2>{user.firstName || "N/A"} {user.lastName || ""}</h2>
+        <p className="username">@{user.username || "unknown"}</p>
       </div>
 
       <div className="profile-details">
         <div className="detail-item">
-          <span className="label">Email</span>
-          <span className="value">{user.email}</span>
+          <span className="label">Email: </span>
+          <span className="value">{user.email || "N/A"}</span>
         </div>
-        
+
         <div className="detail-item">
-          <span className="label">Organization</span>
-          <span className="value">{user.organization}</span>
+          <span className="label">Birthday: </span>
+          <span className="value">{birthday}</span>
         </div>
-        
+
         <div className="detail-item">
-          <span className="label">About</span>
-          <p className="value about">{user.about}</p>
+          <span className="label">About: </span>
+          <p className="value about">{user.bio || "No bio available."}</p>
+        </div>
+
+        <div className="detail-item">
+          <span className="label">Programming Languages: </span>
+          <span className="value">{programmingLanguages}</span>
         </div>
       </div>
 

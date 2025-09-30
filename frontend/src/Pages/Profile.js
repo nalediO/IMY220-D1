@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
 import ProfileInfo from "../components/ProfileInfo";
@@ -6,106 +6,159 @@ import EditProfile from "../components/EditProfile";
 import ProjectList from "../components/ProjectList";
 import FriendsList from "../components/FriendsList";
 import CreateProject from "../components/CreateProject";
+import PendingRequests from "../components/PendingRequest";
+import { userService, projectService, friendService } from "../services/api";
 import "../css/Profile.css";
 
 const Profile = () => {
-  // User data state
-  const [user, setUser] = useState({
-    username: "johndoe",
-    name: "John",
-    surname: "Doe",
-    email: "email@deposit.com",
-    about: "Developer passionate about React and Node.js",
-    organization: "Computer News",
-    profilePic: null
-  });
-
-  // UI state
+  const [user, setUser] = useState(null);
+  const [userProjects, setUserProjects] = useState([]);
+  const [friends, setFriends] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+
+        if (!storedUser?._id) {
+          throw new Error("User not logged in");
+        }
+
+        // Fetch user profile
+        const profile = await userService.getProfile(storedUser._id);
+        setUser(profile);
+
+        // Fetch all projects and filter by owner
+        const projects = await projectService.getAllProjects();
+        console.log("Fetched projects:", projects);
+
+        const myProjects = projects.filter(
+          (p) =>
+            p.owner?._id === storedUser._id || // compare nested owner's _id
+            p.ownerId === storedUser._id       // fallback if some projects use ownerId directly
+        );
+        console.log("My projects:", myProjects);
+        setUserProjects(myProjects);
+
+        // Fetch friends
+        const myFriends = await friendService.getFriends();
+        setFriends(myFriends);
+
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
+  const reloadFriends = async () => {
+    try {
+      const myFriends = await friendService.getFriends();
+      setFriends(myFriends);
+    } catch (err) {
+      console.error("Reload friends failed:", err);
+    }
+  };
+
+
+  const handleProfileUpdate = async (updatedUser) => {
+    try {
+      const saved = await userService.updateProfile(user._id, updatedUser);
+      setUser(saved);
+      localStorage.setItem("user", JSON.stringify(saved));
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
+  };
+
+  const handleProjectUpdate = async (updatedProject) => {
+  const saved = await projectService.updateProject(updatedProject._id, updatedProject);
+  setUserProjects((prev) =>
+    prev.map((p) => (p._id === updatedProject._id ? saved : p))
+  );
+};
+
+
+
+const handleProjectDelete = async (projectId) => {
+  await projectService.deleteProject(projectId);
+  setUserProjects((prev) => prev.filter((p) => p._id !== projectId));
+};
   
-  // Sample data
-  const [userProjects, setUserProjects] = useState([
-    { id: 1, title: "Weather App", description: "A React-based weather application" },
-    { id: 2, title: "Task Manager", description: "Project management tool with drag-and-drop" },
-    { id: 3, title: "Portfolio Website", description: "Personal portfolio built with React" },
-  ]);
 
-  const [friends, setFriends] = useState([
-    { id: 1, name: "Alice Smith", mutualProjects: 3 },
-    { id: 2, name: "Bob Johnson", mutualProjects: 2 },
-    { id: 3, name: "Charlie Brown", mutualProjects: 5 },
-  ]);
-
-  // Handle profile updates
-  const handleProfileUpdate = (updatedUser) => {
-    setUser(updatedUser);
-    setIsEditing(false);
+  const handleProjectCreate = async (newProject) => {
+    try {
+      const created = await projectService.createProject({
+        ...newProject,
+        ownerId: user._id,
+      });
+      setUserProjects([...userProjects, created]);
+      setShowCreateProject(false);
+    } catch (err) {
+      console.error("Create project failed:", err);
+    }
   };
 
-  // Handle project creation
-  const handleProjectCreate = (newProject) => {
-    setUserProjects([...userProjects, { 
-      id: userProjects.length + 1, 
-      ...newProject 
-    }]);
-    setShowCreateProject(false);
-  };
+  if (loading) return <div className="loading">Loading profile...</div>;
+  if (!user) return <div className="error">Unable to load profile.</div>;
 
   return (
     <div className="profile-container">
       <Nav />
-      
+
       <div className="profile-content">
         <div className="profile-header">
           <h1>Profile</h1>
           <div className="header-actions">
             {!isEditing && !showCreateProject && (
-              <button 
-                className="primary-btn"
-                onClick={() => setIsEditing(true)}
-              >
+              <button className="primary-btn" onClick={() => setIsEditing(true)}>
                 Edit Profile
               </button>
             )}
             {!isEditing && (
-              <button 
+              <button
                 className="secondary-btn"
                 onClick={() => setShowCreateProject(!showCreateProject)}
               >
-                {showCreateProject ? 'Cancel' : 'Create Project'}
+                {showCreateProject ? "Cancel" : "Create Project"}
               </button>
             )}
           </div>
         </div>
 
         <div className="profile-layout">
-          {/* Left Column - Profile Info */}
+          {/* Left Column */}
           <div className="profile-left">
             {isEditing ? (
-              <EditProfile 
-                user={user} 
+              <EditProfile
+                user={user}
                 onSave={handleProfileUpdate}
                 onCancel={() => setIsEditing(false)}
               />
             ) : (
-              <ProfileInfo 
-                user={user} 
-                onEdit={() => setIsEditing(true)}
-              />
+              <ProfileInfo user={user} onEdit={() => setIsEditing(true)} />
             )}
-            
-            {/* Friends List */}
+
+            <div className="section-card">
+              <PendingRequests onAcceptedOrRejected={reloadFriends} />
+            </div>
             <div className="section-card">
               <FriendsList friends={friends} />
             </div>
           </div>
 
-          {/* Right Column - Projects */}
+          {/* Right Column */}
           <div className="profile-right">
             {showCreateProject ? (
               <div className="section-card">
-                <CreateProject 
+                <CreateProject
                   onCreate={handleProjectCreate}
                   onCancel={() => setShowCreateProject(false)}
                 />
@@ -114,7 +167,7 @@ const Profile = () => {
               <div className="section-card">
                 <div className="section-header">
                   <h2>My Projects</h2>
-                  <button 
+                  <button
                     className="icon-btn"
                     onClick={() => setShowCreateProject(true)}
                     title="Create new project"
@@ -122,13 +175,17 @@ const Profile = () => {
                     +
                   </button>
                 </div>
-                <ProjectList projects={userProjects} />
+                  <ProjectList
+                    projects={userProjects}   
+                    onUpdate={handleProjectUpdate}
+                    onDelete={handleProjectDelete}
+                  />
               </div>
             )}
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

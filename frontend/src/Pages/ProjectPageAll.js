@@ -1,44 +1,105 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProjectList from "../components/ProjectList";
-import EditProject from "../components/EditProject";
 import Nav from "../components/Nav";
-import "../css/ProjectsPageAll.css"; 
-const ProjectsPageAll = ({ projectsData }) => {
-  const [projects, setProjects] = useState(projectsData || []);
-  const [editingProject, setEditingProject] = useState(null);
+import { projectService } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import "../css/ProjectsPageAll.css";
 
-  const handleEdit = (project) => {
-    setEditingProject(project);
+const ProjectsPageAll = () => {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { user: loggedInUser } = useAuth();
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const data = await projectService.getAllProjects();
+        const userProjects = Array.isArray(data)
+          ? data.filter(
+              (p) =>
+                p?.owner?._id === loggedInUser?._id ||
+                p?.owner === loggedInUser?._id
+            )
+          : [];
+        setProjects(userProjects);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+        setError("Failed to load projects.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (loggedInUser?._id) fetchProjects();
+  }, [loggedInUser]);
+
+  const handleDelete = async (projectId) => {
+    try {
+      await projectService.deleteProject(projectId);
+      setProjects((prev) => prev.filter((p) => p._id !== projectId));
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      alert("Error deleting project.");
+    }
   };
 
-  const handleSave = (updatedProject) => {
-    setProjects(projects.map((p) => (p.id === updatedProject.id ? updatedProject : p)));
-    setEditingProject(null);
-  };
+const handleUpdate = async (formData, projectId) => {
+  const userToken = localStorage.getItem("token"); // 🟢 Retrieve your token here
 
-  const handleCancel = () => {
-    setEditingProject(null);
-  };
+  if (!userToken) {
+    console.error("User token is missing");
+    alert("You are not logged in.");
+    return;
+  }
+
+  if (!projectId) {
+    console.error("updateProject called without a valid ID:", projectId);
+    alert("Project ID is missing.");
+    return;
+  }
+
+  try {
+    // Build project object
+    const project = { _id: projectId };
+
+    if (formData instanceof FormData) {
+      const projectData = JSON.parse(formData.get("project"));
+      project._id = projectData._id || projectId;
+      project.newFiles = formData.getAll("files");
+      project.newImage = formData.get("image");
+      Object.assign(project, projectData);
+    }
+
+    // ✅ Pass token here
+    await projectService.updateProject(project, userToken);
+
+    // Refresh projects
+    const data = await projectService.getAllProjects();
+    setProjects(
+      data.filter(
+        (p) => p?.owner?._id === loggedInUser?._id || p?.owner === loggedInUser?._id
+      )
+    );
+  } catch (err) {
+    console.error("Failed to update project:", err);
+    alert("Error saving project.");
+  }
+};
+
+
+  if (loading) return <div>Loading projects...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="projects-page">
       <Nav />
-      <h1 className="projects-title">My Projects</h1>
-
-      {editingProject ? (
-        <EditProject
-          project={editingProject}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
-      ) : (
-        <ProjectList
-          projects={projects.map((p) => ({
-            ...p,
-            onEdit: () => handleEdit(p), // pass edit handler to each card
-          }))}
-        />
-      )}
+      <h1>My Projects</h1>
+      <ProjectList
+        projects={projects}
+        onDelete={handleDelete}
+        onUpdate={handleUpdate}
+      />
     </div>
   );
 };

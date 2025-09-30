@@ -1,19 +1,18 @@
-
 import React from "react";
 import "../css/FilesList.css";
 
-const FilesList = ({ files, onSelect  }) => {
+const FilesList = ({ files, onSelect }) => {
   return (
     <div className="files-list">
       {files && files.length > 0 ? (
         <ul>
-          {files.map((file) => (
+          {files.map((file, index) => (
             <li
-              key={file.id}
+              key={file._id || file.id || index}
               className="file-item"
               onClick={() => onSelect(file)}
             >
-              📄 {file.name}
+              📄 {file.filename || file.name}
             </li>
           ))}
         </ul>

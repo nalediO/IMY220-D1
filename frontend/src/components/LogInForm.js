@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import "../css/LogInForm.css";
 
 const LogInForm = () => {
@@ -8,6 +9,9 @@ const LogInForm = () => {
     password: ""
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -15,43 +19,44 @@ const LogInForm = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-      console.log(data);
-
-      if (response.ok) {
-        
-        navigate("/home2");
-      } else {
-        alert(data.message || "Login failed");
-      }
+      // Use the auth context login function
+      await login(formData.email, formData.password);
+      
+      // Redirect to home page on success
+      navigate("/home2");
+      
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="login-form">
+      {error && <div className="error-message">{error}</div>}
+      
       <input
         type="email"
         name="email"
         value={formData.email}
-        placeholder="Email"
+        placeholder="Email Address"
         onChange={handleChange}
         required
+        disabled={loading}
       />
+
       <input
         type="password"
         name="password"
@@ -59,8 +64,22 @@ const LogInForm = () => {
         placeholder="Password"
         onChange={handleChange}
         required
+        disabled={loading}
       />
-      <button type="submit">Log In</button>
+
+      <button type="submit" disabled={loading} className={loading ? "loading" : ""}>
+        {loading ? "Logging in..." : "Log In"}
+      </button>
+
+      <p className="signup-redirect">
+        Don't have an account? <a href="/signin">Sign up here</a>
+      </p>
+
+      <div className="test-account">
+        <p>Test Account:</p>
+        <p>Email: test@test.com</p>
+        <p>Password: test1234</p>
+      </div>
     </form>
   );
 };
