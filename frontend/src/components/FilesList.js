@@ -1,25 +1,26 @@
 import React from "react";
 import "../css/FilesList.css";
 
-const FilesList = ({ files, onSelect }) => {
+const FilesList = ({ files = [], onSelect }) => {
+  if (files.length === 0) {
+    return <p className="no-files">No files uploaded yet.</p>;
+  }
+
   return (
-    <div className="files-list">
-      {files && files.length > 0 ? (
-        <ul>
-          {files.map((file, index) => (
-            <li
-              key={file._id || file.id || index}
-              className="file-item"
-              onClick={() => onSelect(file)}
-            >
-              📄 {file.filename || file.name}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No files in this project yet.</p>
-      )}
-    </div>
+    <ul className="files-list">
+      {files.map((file) => (
+        <li
+          key={file.storedName || file.originalName}
+          className="file-item"
+          onClick={() => onSelect(file)}
+        >
+          <span className="file-name">{file.originalName}</span>
+          <span className="file-date">
+            {new Date(file.uploadDate).toLocaleDateString()}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 };
 

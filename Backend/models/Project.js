@@ -12,8 +12,10 @@ const projectSchema = new mongoose.Schema({
   checkedOutBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   imageUrl: String,
   files: [{
-    filename: String,
-    fileUrl: String,
+    originalName: String,   
+    storedName: String,      
+    fileUrl: String,        
+    mimetype: String,        
     uploadDate: { type: Date, default: Date.now }
   }],
   createdAt: { type: Date, default: Date.now }

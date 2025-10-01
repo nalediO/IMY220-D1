@@ -14,7 +14,13 @@ const ProjectPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+
+  // File states
   const [selectedFile, setSelectedFile] = useState(null);
+  const [fileContent, setFileContent] = useState("");
+  const [isEditingFile, setIsEditingFile] = useState(false);
+
+  // Check-in states
   const [newCheckinMessage, setNewCheckinMessage] = useState("");
   const [newFiles, setNewFiles] = useState([]);
   const [isCheckedOut, setIsCheckedOut] = useState(false);
@@ -25,7 +31,6 @@ const ProjectPage = () => {
         setLoading(true);
         setError("");
 
-        // Fetch project details
         const projectData = await projectService.getProject(projectId);
         if (!projectData || !projectData._id) {
           setError("Project not found.");
@@ -34,7 +39,6 @@ const ProjectPage = () => {
         setProject(projectData);
         setIsCheckedOut(projectData.isCheckedOut);
 
-        // Fetch checkins for this project
         const checkinsData = await checkinService.getProjectCheckins(projectId);
         setCheckins(checkinsData || []);
       } catch (err) {
@@ -48,27 +52,89 @@ const ProjectPage = () => {
     fetchProjectData();
   }, [projectId]);
 
-  const handleEdit = (updatedProject) => {
-    setProject(updatedProject);
-    setIsEditing(false);
-  };
-
-  const handleFileSelect = (file) => {
+  // =================== FILE HANDLING ===================
+  const handleFileSelect = async (file) => {
     setSelectedFile(file);
+    setIsEditingFile(false);
+
+    try {
+      const res = await fetch(`http://localhost:5000/uploads/${file.storedName}`);
+      if (!res.ok) throw new Error("Unable to load file");
+
+      const text = await res.text();
+      setFileContent(text);
+    } catch (err) {
+      console.error("Error reading file:", err);
+      setFileContent("// Unable to preview this file");
+    }
   };
 
+  const handleSaveFile = async () => {
+    try {
+      if (!selectedFile || !fileContent) return;
+
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const formData = new FormData();
+      // ✅ field name must match multer.single('file')
+      formData.append("file", new File([blob], selectedFile.originalName));
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/files/${selectedFile.storedName}`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to save file");
+      alert("File updated successfully!");
+
+      const updated = await projectService.getProject(projectId);
+      setProject(updated);
+      setIsEditingFile(false);
+    } catch (err) {
+      console.error("Error saving file:", err);
+      alert("Could not save file changes.");
+    }
+  };
+
+
+  const handleDeleteFile = async (storedName) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/files/${storedName}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to delete file");
+
+      alert("File deleted!");
+      setSelectedFile(null);
+
+      const updated = await projectService.getProject(projectId);
+      setProject(updated);
+    } catch (err) {
+      console.error("Error deleting file:", err);
+    }
+  };
+
+  // =================== PROJECT CHECKIN ===================
   const handleFileUploadChange = (e) => {
     setNewFiles(Array.from(e.target.files));
   };
 
   const handleCheckOut = async () => {
     try {
-      // backend route: PUT /projects/:id/checkout
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/projects/${projectId}/checkout`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/checkout`,
+        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
+      );
       if (!res.ok) throw new Error("Failed to check out project");
       setIsCheckedOut(true);
     } catch (error) {
@@ -91,31 +157,31 @@ const ProjectPage = () => {
       setCheckins([newCheckin, ...checkins]);
       setNewCheckinMessage("");
       setNewFiles([]);
-      setIsCheckedOut(false); // reset lock
+      setIsCheckedOut(false);
+
+      const updated = await projectService.getProject(projectId);
+      setProject(updated);
     } catch (error) {
       console.error("Error creating checkin:", error);
     }
   };
 
-  if (loading) {
-    return (
-      <main className="project-page">
-        <Nav />
-        <div className="loading-container">Loading project...</div>
-        <Footer />
-      </main>
-    );
-  }
+  // =================== UI RENDER ===================
+  if (loading) return (
+    <main className="project-page">
+      <Nav />
+      <div className="loading-container">Loading project...</div>
+      <Footer />
+    </main>
+  );
 
-  if (error || !project) {
-    return (
-      <main className="project-page">
-        <Nav />
-        <div className="error-container">{error || "Project not found."}</div>
-        <Footer />
-      </main>
-    );
-  }
+  if (error || !project) return (
+    <main className="project-page">
+      <Nav />
+      <div className="error-container">{error || "Project not found."}</div>
+      <Footer />
+    </main>
+  );
 
   return (
     <main className="project-page">
@@ -134,26 +200,44 @@ const ProjectPage = () => {
         </div>
 
         <div className="project-body">
-          {/* Files Sidebar */}
           <div className="files-section">
             <h3>Project Files</h3>
-            <FilesList files={project.files || []} onSelect={handleFileSelect} />
+            <FilesList
+              files={project.files || []}
+              onSelect={handleFileSelect}
+            />
           </div>
 
-          {/* Main Content Area */}
           <div className="content-section">
-            {/* File Preview */}
             {selectedFile ? (
               <div className="file-preview">
-                <h4>{selectedFile.filename || selectedFile.name}</h4>
-                <a
-                  href={`http://localhost:5000${selectedFile.fileUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="download-btn"
-                >
-                  Download File
-                </a>
+                <h4>{selectedFile.originalName}</h4>
+
+                {isEditingFile ? (
+                  <>
+                    <textarea
+                      value={fileContent}
+                      onChange={(e) => setFileContent(e.target.value)}
+                      rows={15}
+                      className="file-textarea"
+                    />
+                    <button onClick={handleSaveFile}>Save Changes</button>
+                    <button onClick={() => setIsEditingFile(false)}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <pre className="file-content">{fileContent}</pre>
+                    <button onClick={() => setIsEditingFile(true)}>Edit File</button>
+                    <button onClick={() => handleDeleteFile(selectedFile.storedName)}>Delete File</button>
+                    <a
+                      href={`http://localhost:5000/uploads/${selectedFile.storedName}`}
+                      download={selectedFile.originalName}
+                      className="download-btn"
+                    >
+                      Download
+                    </a>
+                  </>
+                )}
               </div>
             ) : (
               <div className="no-file-selected">
@@ -161,11 +245,8 @@ const ProjectPage = () => {
               </div>
             )}
 
-            {/* Checkins/Messages Section */}
             <div className="checkins-section">
               <h3>Project Activity & Messages</h3>
-
-              {/* Checkout / Checkin */}
               {!isCheckedOut ? (
                 <button className="checkout-btn" onClick={handleCheckOut}>
                   Check Out Project
@@ -175,7 +256,7 @@ const ProjectPage = () => {
                   <textarea
                     value={newCheckinMessage}
                     onChange={(e) => setNewCheckinMessage(e.target.value)}
-                    placeholder="What did you work on? Add a message about your changes..."
+                    placeholder="What did you work on? Add a message..."
                     rows={3}
                   />
                   <input type="file" multiple onChange={handleFileUploadChange} />
@@ -183,7 +264,6 @@ const ProjectPage = () => {
                 </div>
               )}
 
-              {/* Display Checkins */}
               <div className="checkins-list">
                 {checkins.length > 0 ? (
                   checkins.map((checkin) => (
@@ -191,9 +271,7 @@ const ProjectPage = () => {
                       <div className="checkin-header">
                         <span className="user">{checkin.user?.username || "Unknown"}</span>
                         <span className="version">v{checkin.version}</span>
-                        <span className="date">
-                          {new Date(checkin.createdAt).toLocaleDateString()}
-                        </span>
+                        <span className="date">{new Date(checkin.createdAt).toLocaleDateString()}</span>
                       </div>
                       <p className="checkin-message">{checkin.message}</p>
                       {checkin.files && checkin.files.length > 0 && (
@@ -202,12 +280,12 @@ const ProjectPage = () => {
                           {checkin.files.map((file, index) => (
                             <a
                               key={index}
-                              href={`http://localhost:5000${file.fileUrl}`}
+                              href={`http://localhost:5000/uploads/${file.storedName}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="file-tag"
                             >
-                              {file.filename}
+                              {file.originalName}
                             </a>
                           ))}
                         </div>
@@ -223,13 +301,12 @@ const ProjectPage = () => {
         </div>
       </section>
 
-      {/* Edit Modal */}
       {isEditing && (
         <div className="modal">
           <div className="modal-content">
             <EditProject
               project={project}
-              onSave={handleEdit}
+              onSave={() => setIsEditing(false)}
               onCancel={() => setIsEditing(false)}
             />
           </div>

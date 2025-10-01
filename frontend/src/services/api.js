@@ -232,7 +232,6 @@ updateProject: async (project, token) => {
 },
 
 
-
   deleteProject: async (id) => {
     const token = localStorage.getItem("token");
     const res = await fetch(`/api/projects/${id}`, {
@@ -248,35 +247,42 @@ updateProject: async (project, token) => {
 
 // ====================== CHECKIN SERVICE ======================
 export const checkinService = {
-  getProjectCheckins: (projectId) => apiRequest(`/checkins/project/${projectId}`),
+  getProjectCheckins: async (projectId) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE_URL}/checkins/project/${projectId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to fetch checkins");
+    return res.json();
+  },
 
-  createCheckin: async (checkinData) => {
-    const token = localStorage.getItem('token');
+  createCheckin: async ({ projectId, message, version, files = [] }) => {
+    const token = localStorage.getItem("token");
     const formData = new FormData();
 
-    formData.append('projectId', checkinData.projectId);
-    formData.append('message', checkinData.message);
-    if (checkinData.version) {
-      formData.append('version', checkinData.version);
-    }
+    // ✅ Attach message + version
+    formData.append("message", message);
+    formData.append("version", version);
 
-    if (Array.isArray(checkinData.files)) {
-      checkinData.files.forEach((file) => formData.append('files', file));
-    }
+    // ✅ Attach files
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
 
-    const response = await fetch(`${API_BASE_URL}/checkins`, {
-      method: 'POST',
+    const res = await fetch(`${API_BASE_URL}/projects/${projectId}/checkin`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
+        // ⚠️ Do NOT set Content-Type manually – browser will set multipart boundary
       },
       body: formData,
     });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || 'Failed to create check-in');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to create checkin");
     }
 
-    return await response.json();
+    return res.json();
   },
 };

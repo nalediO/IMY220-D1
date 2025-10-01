@@ -30,7 +30,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/checkins', checkinRoutes);
 app.use('/api/friends', friendRoutes);
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running!' });

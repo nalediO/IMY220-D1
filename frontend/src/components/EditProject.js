@@ -4,9 +4,9 @@ import "../css/EditProject.css";
 const EditProject = ({ project, onSave, onCancel }) => {
   const [updatedProject, setUpdatedProject] = useState({
     _id: "",
-    title: "",
+    name: "",
     description: "",
-    version: "",
+    currentVersion: "",
     hashtags: [],
     imageUrl: "",
     files: []
@@ -20,9 +20,9 @@ const EditProject = ({ project, onSave, onCancel }) => {
     if (project) {
       setUpdatedProject({
         _id: project._id,
-        title: project.name || project.title || "",
+        name: project.name || "",
         description: project.description || "",
-        version: project.currentVersion || project.version || "",
+        currentVersion: project.currentVersion || "1.0.0",
         hashtags: project.hashtags || [],
         imageUrl: project.imageUrl || "",
         files: project.files || []
@@ -64,8 +64,6 @@ const EditProject = ({ project, onSave, onCancel }) => {
     const mergedProject = {
       ...project,
       ...updatedProject,
-      name: updatedProject.title || project.name,
-      currentVersion: updatedProject.version || project.currentVersion,
     };
 
     const formData = new FormData();
@@ -84,11 +82,11 @@ const EditProject = ({ project, onSave, onCancel }) => {
         <h2 className="edit-project-title">Edit Project</h2>
 
         <label className="edit-label">
-          Title
+          Project Name
           <input
             className="edit-input"
-            name="title"
-            value={updatedProject.title}
+            name="name"
+            value={updatedProject.name}
             onChange={handleChange}
             required
           />
@@ -110,8 +108,8 @@ const EditProject = ({ project, onSave, onCancel }) => {
           Version
           <input
             className="edit-input"
-            name="version"
-            value={updatedProject.version}
+            name="currentVersion"
+            value={updatedProject.currentVersion}
             onChange={handleChange}
             required
           />
@@ -136,7 +134,7 @@ const EditProject = ({ project, onSave, onCancel }) => {
             />
           </div>
         )}
-        
+
         <label className="edit-label">
           Project Image
           <input type="file" accept="image/*" onChange={handleImageChange} className="file-input" />
