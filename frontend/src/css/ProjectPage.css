@@ -177,7 +177,7 @@
   margin-right: 0;
 }
 
-.download-btn {
+.file-preview .download-btn1 {
   display: inline-block;
   background: #10b981;
   color: white;
@@ -192,7 +192,7 @@
   margin-right: 0.5rem;
 }
 
-.download-btn:hover {
+.file-preview .download-btn1:hover {
   background: #059669;
   transform: translateY(-1px);
 }
@@ -456,7 +456,7 @@
 
 @media (max-width: 480px) {
   .file-preview button,
-  .download-btn {
+  .download-btn1 {
     width: 100%;
     margin-right: 0;
     margin-bottom: 0.5rem;

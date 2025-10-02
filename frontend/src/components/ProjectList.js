@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import ProjectPreview from "./ProjectPreview";
 import EditProject from "./EditProject";
 
+import "../css/ProjectList.css";
+
 const ProjectList = ({ projects, onUpdate, onDelete }) => {
   const [editingProject, setEditingProject] = useState(null);
 
@@ -13,9 +15,9 @@ const ProjectList = ({ projects, onUpdate, onDelete }) => {
           {editingProject?._id === project._id ? (
             <EditProject
               project={editingProject}
-              
+
               onSave={(formData, projectId) => {
-                onUpdate(formData, projectId);  
+                onUpdate(formData, projectId);
                 setEditingProject(null);
               }}
               onCancel={() => setEditingProject(null)}
@@ -23,9 +25,19 @@ const ProjectList = ({ projects, onUpdate, onDelete }) => {
           ) : (
             <>
               <ProjectPreview project={project} />
-              <div className="project-actions">
-                <button onClick={() => setEditingProject(project)}>Edit</button>
-                <button onClick={() => onDelete(project._id)}>Delete</button>
+              <div className="project-actions fixed-width">
+                <button
+                  className="project-edit-btn"
+                  onClick={() => setEditingProject(project)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="project-delete-btn"
+                  onClick={() => onDelete(project._id)}
+                >
+                  Delete
+                </button>
               </div>
             </>
           )}

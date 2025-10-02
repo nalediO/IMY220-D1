@@ -94,7 +94,7 @@ const handleUpdate = async (formData, projectId) => {
   return (
     <div className="projects-page">
       <Nav />
-      <h1>My Projects</h1>
+      <h1 className="projects-title">My Projects</h1>
       <ProjectList
         projects={projects}
         onDelete={handleDelete}

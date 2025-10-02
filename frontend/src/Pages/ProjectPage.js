@@ -101,27 +101,38 @@ const ProjectPage = () => {
   };
 
 
-  const handleDeleteFile = async (storedName) => {
+  const handleDownloadFile = async (file) => {
+    const token = localStorage.getItem("token");
+
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch(
-        `http://localhost:5000/api/projects/${projectId}/files/${storedName}`,
+        `http://localhost:5000/api/projects/${projectId}/files/${file.storedName}/download`,
         {
-          method: "DELETE",
+          method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      if (!res.ok) throw new Error("Failed to delete file");
 
-      alert("File deleted!");
-      setSelectedFile(null);
+      if (!res.ok) throw new Error("Failed to download file");
 
-      const updated = await projectService.getProject(projectId);
-      setProject(updated);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", file.originalName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url); // ✅ cleanup
     } catch (err) {
-      console.error("Error deleting file:", err);
+      console.error("Download error:", err);
+      alert("Could not download file.");
     }
   };
+
+
 
   // =================== PROJECT CHECKIN ===================
   const handleFileUploadChange = (e) => {
@@ -229,13 +240,10 @@ const ProjectPage = () => {
                     <pre className="file-content">{fileContent}</pre>
                     <button onClick={() => setIsEditingFile(true)}>Edit File</button>
                     <button onClick={() => handleDeleteFile(selectedFile.storedName)}>Delete File</button>
-                    <a
-                      href={`http://localhost:5000/uploads/${selectedFile.storedName}`}
-                      download={selectedFile.originalName}
-                      className="download-btn"
-                    >
+                    <button onClick={() => handleDownloadFile(selectedFile)} className="download-btn1">
                       Download
-                    </a>
+                    </button>
+
                   </>
                 )}
               </div>
@@ -278,16 +286,15 @@ const ProjectPage = () => {
                         <div className="checkin-files">
                           <strong>Files updated:</strong>
                           {checkin.files.map((file, index) => (
-                            <a
+                            <button
                               key={index}
-                              href={`http://localhost:5000/uploads/${file.storedName}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              onClick={() => handleDownloadFile(file)}
                               className="file-tag"
                             >
                               {file.originalName}
-                            </a>
+                            </button>
                           ))}
+
                         </div>
                       )}
                     </div>

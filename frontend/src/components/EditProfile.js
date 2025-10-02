@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { userService } from "../services/api";
 import "../css/EditProfile.css";
 
-const EditProfile = ({ user, onCancel, onUpdate }) => {
+const EditProfile = ({ user, onCancel, onSave }) => {
   const [formData, setFormData] = useState(user);
   const [preview, setPreview] = useState(user.profileImage || null);
   const [saving, setSaving] = useState(false);
@@ -25,7 +25,7 @@ const EditProfile = ({ user, onCancel, onUpdate }) => {
     setSaving(true);
     try {
       const updatedUser = await userService.updateProfile(user._id, formData);
-      onUpdate(updatedUser); // Update Profile.js state
+      onSave(updatedUser); // Update Profile.js state
     } catch (err) {
       console.error("Profile update failed:", err);
       alert("Failed to update profile.");
@@ -102,6 +102,21 @@ const EditProfile = ({ user, onCancel, onUpdate }) => {
           value={formData.email || ""}
           onChange={handleChange}
           required
+        />
+      </div>
+
+      {/* Birthday Input */}
+      <div className="edit-form-group">
+        <label>Birthday</label>
+        <input
+          type="date"
+          name="birthday"
+          value={
+            formData.birthday
+              ? new Date(formData.birthday).toISOString().split("T")[0]
+              : ""
+          }
+          onChange={handleChange}
         />
       </div>
 

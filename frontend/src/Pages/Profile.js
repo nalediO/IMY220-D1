@@ -6,6 +6,7 @@ import EditProfile from "../components/EditProfile";
 import ProjectList from "../components/ProjectList";
 import FriendsList from "../components/FriendsList";
 import CreateProject from "../components/CreateProject";
+import EditProject from "../components/EditProject";  // ✅ Import
 import PendingRequests from "../components/PendingRequest";
 import { userService, projectService, friendService } from "../services/api";
 import "../css/Profile.css";
@@ -16,6 +17,7 @@ const Profile = () => {
   const [friends, setFriends] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [editingProject, setEditingProject] = useState(null); // ✅ track which project is being edited
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,30 +25,22 @@ const Profile = () => {
       try {
         const storedUser = JSON.parse(localStorage.getItem("user"));
 
-        if (!storedUser?._id) {
-          throw new Error("User not logged in");
-        }
+        if (!storedUser?._id) throw new Error("User not logged in");
 
         // Fetch user profile
         const profile = await userService.getProfile(storedUser._id);
         setUser(profile);
 
-        // Fetch all projects and filter by owner
+        // Fetch projects owned by user
         const projects = await projectService.getAllProjects();
-        console.log("Fetched projects:", projects);
-
         const myProjects = projects.filter(
-          (p) =>
-            p.owner?._id === storedUser._id || // compare nested owner's _id
-            p.ownerId === storedUser._id       // fallback if some projects use ownerId directly
+          (p) => p.owner?._id === storedUser._id || p.ownerId === storedUser._id
         );
-        console.log("My projects:", myProjects);
         setUserProjects(myProjects);
 
         // Fetch friends
         const myFriends = await friendService.getFriends();
         setFriends(myFriends);
-
       } catch (err) {
         console.error("Profile fetch error:", err);
       } finally {
@@ -66,7 +60,6 @@ const Profile = () => {
     }
   };
 
-
   const handleProfileUpdate = async (updatedUser) => {
     try {
       const saved = await userService.updateProfile(user._id, updatedUser);
@@ -78,20 +71,29 @@ const Profile = () => {
     }
   };
 
-  const handleProjectUpdate = async (updatedProject) => {
-  const saved = await projectService.updateProject(updatedProject._id, updatedProject);
-  setUserProjects((prev) =>
-    prev.map((p) => (p._id === updatedProject._id ? saved : p))
-  );
-};
+  // ✅ Correct project update
+  const handleUpdateProject = async (formData, projectId) => {
+    try {
+      if (!projectId) throw new Error("Project ID is missing.");
 
+      console.log("Updating project with ID:", projectId);
+      const updated = await projectService.updateProject(projectId, formData);
 
+      setUserProjects((prev) =>
+        prev.map((p) => (p._id === updated._id ? updated : p))
+      );
 
-const handleProjectDelete = async (projectId) => {
-  await projectService.deleteProject(projectId);
-  setUserProjects((prev) => prev.filter((p) => p._id !== projectId));
-};
-  
+      setEditingProject(null); // close editor
+    } catch (error) {
+      console.error("Failed to update project:", error);
+      alert("Failed to update project: " + (error.message || "Unknown error"));
+    }
+  };
+
+  const handleProjectDelete = async (projectId) => {
+    await projectService.deleteProject(projectId);
+    setUserProjects((prev) => prev.filter((p) => p._id !== projectId));
+  };
 
   const handleProjectCreate = async (newProject) => {
     try {
@@ -117,12 +119,12 @@ const handleProjectDelete = async (projectId) => {
         <div className="profile-header">
           <h1>Profile</h1>
           <div className="header-actions">
-            {!isEditing && !showCreateProject && (
+            {!isEditing && !showCreateProject && !editingProject && (
               <button className="primary-btn" onClick={() => setIsEditing(true)}>
                 Edit Profile
               </button>
             )}
-            {!isEditing && (
+            {!isEditing && !editingProject && (
               <button
                 className="secondary-btn"
                 onClick={() => setShowCreateProject(!showCreateProject)}
@@ -156,11 +158,19 @@ const handleProjectDelete = async (projectId) => {
 
           {/* Right Column */}
           <div className="profile-right">
-            {showCreateProject ? (
+            {showCreateProject && !editingProject ? (
               <div className="section-card">
                 <CreateProject
                   onCreate={handleProjectCreate}
                   onCancel={() => setShowCreateProject(false)}
+                />
+              </div>
+            ) : editingProject ? (
+              <div className="section-card">
+                <EditProject
+                  project={editingProject}
+                  onSave={handleUpdateProject}
+                  onCancel={() => setEditingProject(null)}
                 />
               </div>
             ) : (
@@ -175,11 +185,11 @@ const handleProjectDelete = async (projectId) => {
                     +
                   </button>
                 </div>
-                  <ProjectList
-                    projects={userProjects}   
-                    onUpdate={handleProjectUpdate}
-                    onDelete={handleProjectDelete}
-                  />
+                <ProjectList
+                  projects={userProjects}
+                  onUpdate={(p) => setEditingProject(p)} // ✅ pass project to Edit
+                  onDelete={handleProjectDelete}
+                />
               </div>
             )}
           </div>
