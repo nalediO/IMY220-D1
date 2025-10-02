@@ -6,20 +6,19 @@ import "../css/UserCard.css";
 const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const [loading, setLoading] = useState(false);
 
-  const pendingRequest = currentRequests.find(
-    (req) => req.to._id === user._id
-  );
+  // check if there's already a pending request for this user
+  const pendingRequest = currentRequests.find((req) => req.toUserId === user._id);
 
   const handleSendRequest = async () => {
     try {
       setLoading(true);
       if (pendingRequest) {
-        // Resend if request exists
+        // resend request
         await friendService.resendFriendRequest(user._id);
       } else {
         await friendService.sendFriendRequest(user._id);
       }
-      onRequestSent(); // Refresh parent list
+      onRequestSent(); // refresh parent list
     } catch (err) {
       alert(err.message);
     } finally {
@@ -27,9 +26,7 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
     }
   };
 
-  const buttonText = pendingRequest
-    ? "Resend Request"
-    : "Send Friend Request";
+  const buttonText = pendingRequest ? "Resend Request" : "Send Friend Request";
 
   return (
     <div className="user-card">
@@ -39,7 +36,9 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
         className="avatar"
       />
       <div className="user-info">
-        <h4>{user.firstName} {user.lastName}</h4>
+        <h4>
+          {user.firstName} {user.lastName}
+        </h4>
         <p>@{user.username}</p>
       </div>
       <button onClick={handleSendRequest} disabled={loading}>

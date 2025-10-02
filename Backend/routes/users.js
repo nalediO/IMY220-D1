@@ -3,6 +3,16 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
+// GET all users
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find().select("-password"); // don’t return password
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+})
+
 // 🔎 Search users (put this first!)
 router.get('/search/:query', auth, async (req, res) => {
   try {
@@ -21,16 +31,7 @@ router.get('/search/:query', auth, async (req, res) => {
   }
 });
 
-// GET all users
-router.get('/', auth, async (req, res) => {
-  try {
-    const users = await User.find({})
-      .select('username firstName lastName profileImage'); // don't send password
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+
 
 // 👤 Get user profile
 router.get('/:id', auth, async (req, res) => {

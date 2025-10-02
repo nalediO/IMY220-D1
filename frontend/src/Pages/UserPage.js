@@ -1,6 +1,7 @@
 // pages/UsersPage.js
 import React, { useEffect, useState } from "react";
-import { userService, friendService } from "../services/api";
+import { userService } from "../services/api";   // only userService here
+import { friendService } from "../services/api"; // ✅ import friendService separately
 import UserCard from "../components/userCard";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
@@ -16,16 +17,20 @@ const UsersPage = () => {
     try {
       setLoading(true);
 
-      // Get all users
+      // ✅ Get all users
       const allUsers = await userService.getAllUsers();
       setUsers(allUsers);
 
-      // Get current user's pending outgoing requests
+      // ✅ Get all requests
       const requests = await friendService.getRequests();
-      setPendingRequests(requests);
 
-      // Incoming requests are those where you are the recipient
-      setIncomingRequests(requests); // Same as above if backend returns only incoming
+      // Distinguish incoming vs outgoing
+      const userId = localStorage.getItem("userId"); // or decode token if you prefer
+      const incoming = requests.filter((req) => req.toUserId === userId);
+      const outgoing = requests.filter((req) => req.fromUserId === userId);
+
+      setIncomingRequests(incoming);
+      setPendingRequests(outgoing);
     } catch (err) {
       console.error("Error fetching users:", err);
     } finally {
@@ -37,7 +42,7 @@ const UsersPage = () => {
     fetchData();
   }, []);
 
-  // Accept incoming request
+  // ✅ Accept incoming request
   const handleAccept = async (requestId) => {
     try {
       await friendService.acceptFriendRequest(requestId);
@@ -47,7 +52,7 @@ const UsersPage = () => {
     }
   };
 
-  // Reject incoming request
+  // ✅ Reject incoming request
   const handleReject = async (requestId) => {
     try {
       await friendService.rejectFriendRequest(requestId);
@@ -80,13 +85,15 @@ const UsersPage = () => {
         {incomingRequests.map((req) => (
           <div key={req._id} className="incoming-request-card">
             <img
-              src={req.from.profileImage || "/default-avatar.png"}
-              alt={req.from.username}
+              src={req.from?.profileImage || "/default-avatar.png"}
+              alt={req.from?.username}
               className="avatar"
             />
             <div className="request-info">
-              <h4>{req.from.firstName} {req.from.lastName}</h4>
-              <p>@{req.from.username}</p>
+              <h4>
+                {req.from?.firstName} {req.from?.lastName}
+              </h4>
+              <p>@{req.from?.username}</p>
             </div>
             <div className="request-actions">
               <button onClick={() => handleAccept(req._id)}>Accept</button>
