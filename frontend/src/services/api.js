@@ -62,6 +62,18 @@ export const userService = {
     if (!res.ok) throw new Error("Server error");
     return res.json();
   },
+
+  getAllUsers: async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE_URL}/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to fetch users");
+    return res.json();
+  },
+  
 };
 
 // ====================== FRIEND SERVICE ======================
