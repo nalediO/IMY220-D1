@@ -8,19 +8,19 @@ const Checkin = require('../models/Checkin');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
+
 // ----------------- MULTER STORAGE -----------------
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '..', 'uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads'));
   },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
+  filename: (req, file, cb) => {
+    // Replace spaces & parentheses with safe chars
+    const safeName = file.originalname.replace(/[() ]/g, "_");
+    cb(null, Date.now() + "-" + safeName);
+  }
 });
+
 const upload = multer({ storage });
 const projectUpload = upload.fields([
   { name: 'files', maxCount: 20 },
@@ -31,30 +31,45 @@ const checkinUpload = upload.array('files', 20);
 // ----------------- CREATE PROJECT -----------------
 router.post('/', auth, projectUpload, async (req, res) => {
   try {
-    const data = req.body.project ? JSON.parse(req.body.project) : req.body;
-
+    console.log('Request body:', req.body);
+    console.log('Files received:', req.files);
+    
+    // Safely parse the project data
+    let data;
+    try {
+      data = req.body.project ? JSON.parse(req.body.project) : req.body;
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return res.status(400).json({ message: 'Invalid project data format', error: parseError.message });
+    }
+    
+    // Create project with safe file handling
     const project = new Project({
       ...data,
       owner: req.user._id,
       members: [req.user._id],
-      files: (req.files['files'] || []).map((f) => ({
+      // Safely handle files
+      files: req.files && req.files['files'] 
+        ? req.files['files'].map((f) => ({
         originalName: f.originalname,
         storedName: f.filename,
-        fileUrl: `/uploads/${f.filename}`,
-        mimetype: f.mimetype,
-      })),
-      imageUrl: req.files['image']
+            fileUrl: `/uploads/${f.filename}`,
+            mimetype: f.mimetype,
+          }))
+        : [],
+      // Safely handle image
+      imageUrl: req.files && req.files['image'] && req.files['image'][0]
         ? `/uploads/${req.files['image'][0].filename}`
         : undefined,
     });
-
+    
     await project.save();
 
     await new Checkin({
       project: project._id,
       user: req.user._id,
       message: 'Project created',
-      version: project.currentVersion,
+      version: project.currentVersion || '1.0',
       files: project.files,
     }).save();
 
@@ -98,21 +113,31 @@ router.put('/:id', auth, projectUpload, async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project ID required' });
 
-    const updatesRaw = req.body.project
-      ? JSON.parse(req.body.project)
-      : req.body;
+    console.log('Update request body:', req.body);
+    console.log('Update files:', req.files);
+
+    let updatesRaw;
+    try {
+      updatesRaw = req.body.project ? JSON.parse(req.body.project) : req.body;
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return res.status(400).json({ message: 'Invalid project data format', error: parseError.message });
+    }
 
     const project = await Project.findById(id);
     if (!project) return res.status(404).json({ message: 'Project not found' });
 
-    if (updatesRaw.title) project.name = updatesRaw.title.trim();
+    // Update project fields
+    if (updatesRaw.name) project.name = updatesRaw.name.trim();
     if (updatesRaw.description) project.description = updatesRaw.description.trim();
-    if (updatesRaw.version) project.currentVersion = updatesRaw.version.trim();
+    if (updatesRaw.projectType) project.projectType = updatesRaw.projectType.trim();
+    if (updatesRaw.currentVersion) project.currentVersion = updatesRaw.currentVersion.trim();
     if (Array.isArray(updatesRaw.hashtags)) project.hashtags = updatesRaw.hashtags;
 
-    // Preserve old files
-    project.files = project.files || [];
-    if (updatesRaw.files) project.files = updatesRaw.files;
+    // Handle existing files - if explicitly provided, replace current files with these
+    if (updatesRaw.existingFiles) {
+      project.files = updatesRaw.existingFiles;
+    }
 
     // Add new uploaded files
     if (req.files?.files?.length) {
@@ -122,12 +147,15 @@ router.put('/:id', auth, projectUpload, async (req, res) => {
         fileUrl: `/uploads/${f.filename}`,
         mimetype: f.mimetype,
       }));
-      project.files = project.files.concat(newFiles);
+      project.files = [...project.files, ...newFiles];
     }
 
+    // Update image if provided
     if (req.files?.image?.length) {
       project.imageUrl = `/uploads/${req.files.image[0].filename}`;
     }
+    
+    console.log('Saving updated project:', project);
     await project.save();
     res.json(project);
   } catch (error) {
@@ -307,21 +335,35 @@ router.put('/:id/files/:storedName', auth, upload.single('file'), async (req, re
   }
 });
 
-// ----------------- DOWNLOAD FILE -----------------
+// ----------------- DOWNLOAD SINGLE FILE -----------------
 router.get('/:id/files/:storedName/download', auth, async (req, res) => {
   try {
-    const { storedName } = req.params;
-    const filePath = path.join(__dirname, '..', 'uploads', storedName);
+    const { id, storedName } = req.params;
 
-    if (fs.existsSync(filePath)) {
-      return res.download(filePath);
-    } else {
-      return res.status(404).json({ message: 'File not found' });
-    }
+    // Find the project
+    const project = await Project.findById(id);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    // Find the file inside project
+    const file = project.files.find(f => f.storedName === storedName);
+    if (!file) return res.status(404).json({ message: 'File not found in project' });
+
+    // Construct absolute path
+    const filePath = path.join(__dirname, '..', 'uploads', storedName);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ message: 'File not found on disk' });
+
+    // Force file download
+    res.download(filePath, file.originalName, (err) => {
+      if (err) {
+        console.error("Download error:", err);
+        res.status(500).json({ message: 'Error downloading file' });
+      }
+    });
   } catch (err) {
-    console.error('Download file error:', err);
+    console.error('Download route error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 
 module.exports = router;
