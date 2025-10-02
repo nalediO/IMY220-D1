@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { projectService, friendService } from "../services/api";
+import { projectService, userService, friendService } from "../services/api";
 import Feed from "../components/Feed";
 import SearchInput from "../components/SearchInput";
 import Footer from "../components/footer";
@@ -11,54 +11,83 @@ import "../css/Home.css";
 const Home = () => {
   const [feedType, setFeedType] = useState("local");
   const [projects, setProjects] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const allProjects = await projectService.getAllProjects();
+        // ✅ Get all projects
+        const projectsData = await projectService.getAllProjects();
+        setAllProjects(projectsData);
 
+        // ✅ Filter for local feed if required
         if (feedType === "local" && user) {
-
           const friends = await friendService.getFriends();
           const friendIds = friends.map((f) => f._id);
 
-          const friendProjects = allProjects.filter(
-          (project) =>
-            friendIds.includes(project.owner?._id) ||
-            project.members?.some((m) => friendIds.includes(m._id))
+          const friendProjects = projectsData.filter(
+            (project) =>
+              friendIds.includes(project.owner?._id) ||
+              project.members?.some((m) => friendIds.includes(m._id))
           );
-          
-          console.log(friendProjects);
-          console.log("was not right22");
-          console.log(allProjects);
+
           setProjects(friendProjects);
         } else {
-           console.log("was not right22");
-
-          setProjects(allProjects);
+          setProjects(projectsData);
         }
+
+        // ✅ Get all users
+        const usersData = await userService.getAllUsers();
+        setUsers(usersData);
+
       } catch (err) {
-        console.error("Error fetching projects:", err);
-        setError("Failed to load projects. Please try again.");
+        console.error("Error fetching data:", err);
+        setError("Failed to load data. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProjects();
+    fetchData();
   }, [feedType, user]);
 
-  const handleSwitchFeed = (type) => setFeedType(type);
-
+  // ✅ Search function
   const handleSearch = (query) => {
-    console.log("Search for:", query);
-    // Add routing or search functionality here
+    setSearchQuery(query);
+
+    // Filter projects
+    const filteredProjects = allProjects.filter((project) => {
+      const searchLower = query.toLowerCase();
+      const messageMatch = project.message?.toLowerCase().includes(searchLower);
+      const typeMatch = project.projectType?.toLowerCase().includes(searchLower);
+      const hashtagMatch = project.hashtags?.some((tag) =>
+        tag.toLowerCase().includes(searchLower)
+      );
+
+      return messageMatch || typeMatch || hashtagMatch;
+    });
+
+    setProjects(filteredProjects);
+
+    // Optional: Filter users (if you want to show user search results)
+    // const filteredUsers = users.filter((u) => {
+    //   const searchLower = query.toLowerCase();
+    //   return (
+    //     u.username.toLowerCase().includes(searchLower) ||
+    //     u.firstName.toLowerCase().includes(searchLower) ||
+    //     u.lastName.toLowerCase().includes(searchLower) ||
+    //     u.email?.toLowerCase().includes(searchLower)
+    //   );
+    // });
+    // setUsers(filteredUsers);
   };
 
   if (loading) {
@@ -88,7 +117,10 @@ const Home = () => {
           <div className="main-feed">
             <div className="error-container">
               <p className="error-message">{error}</p>
-              <button onClick={() => window.location.reload()} className="retry-button">
+              <button
+                onClick={() => window.location.reload()}
+                className="retry-button"
+              >
                 Try Again
               </button>
             </div>
@@ -107,7 +139,11 @@ const Home = () => {
 
         <div className="main-feed">
           <div className="search-container">
-            <SearchInput placeholder="Search projects or users..." />
+            <SearchInput
+              placeholder="Search projects or users..."
+              value={searchQuery}
+              onChange={handleSearch}
+            />
           </div>
 
           <div className="feed-switcher">
@@ -115,13 +151,13 @@ const Home = () => {
             <div className="feed-buttons">
               <button
                 className={feedType === "local" ? "active" : ""}
-                onClick={() => handleSwitchFeed("local")}
+                onClick={() => setFeedType("local")}
               >
                 Local Feed
               </button>
               <button
                 className={feedType === "global" ? "active" : ""}
-                onClick={() => handleSwitchFeed("global")}
+                onClick={() => setFeedType("global")}
               >
                 Global Feed
               </button>

@@ -16,21 +16,19 @@ const UsersPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      // ✅ Get all users
+  
+      // Get all users
       const allUsers = await userService.getAllUsers();
       setUsers(allUsers);
-
-      // ✅ Get all requests
-      const requests = await friendService.getRequests();
-
-      // Distinguish incoming vs outgoing
-      const userId = localStorage.getItem("userId"); // or decode token if you prefer
-      const incoming = requests.filter((req) => req.toUserId === userId);
-      const outgoing = requests.filter((req) => req.fromUserId === userId);
-
+  
+      // Get incoming requests
+      const incoming = await friendService.getRequests();
+  
+      // Get outgoing requests
+      const outgoing = await friendService.getOutgoingRequests();
+  
       setIncomingRequests(incoming);
-      setPendingRequests(outgoing);
+      setPendingRequests(outgoing); // now pending requests show correctly
     } catch (err) {
       console.error("Error fetching users:", err);
     } finally {
@@ -65,42 +63,47 @@ const UsersPage = () => {
   if (loading) return <p>Loading users...</p>;
 
   return (
-    <main className="users-page">
-      <Nav />
-      <h2>All Users</h2>
-      <div className="users-list">
-        {users.map((user) => (
-          <UserCard
-            key={user._id}
-            user={user}
-            currentRequests={pendingRequests}
-            onRequestSent={fetchData}
-          />
-        ))}
-      </div>
 
-      <h2>Incoming Friend Requests</h2>
-      {incomingRequests.length === 0 && <p>No incoming requests</p>}
-      <div className="incoming-requests">
-        {incomingRequests.map((req) => (
-          <div key={req._id} className="incoming-request-card">
-            <img
-              src={req.from?.profileImage || "/default-avatar.png"}
-              alt={req.from?.username}
-              className="avatar"
+
+    <main >
+      <Nav />
+
+      <div className="users-page">
+        <h2>All Users</h2>
+        <div className="users-list">
+          {users.map((user) => (
+            <UserCard
+              key={user._id}
+              user={user}
+              currentRequests={pendingRequests}
+              onRequestSent={fetchData}
             />
-            <div className="request-info">
-              <h4>
-                {req.from?.firstName} {req.from?.lastName}
-              </h4>
-              <p>@{req.from?.username}</p>
+          ))}
+        </div>
+
+        <h2>Incoming Friend Requests</h2>
+        {incomingRequests.length === 0 && <p>No incoming requests</p>}
+        <div className="incoming-requests">
+          {incomingRequests.map((req) => (
+            <div key={req._id} className="incoming-request-card">
+              <img
+                src={req.from?.profileImage || "/default-avatar.png"}
+                alt={req.from?.username}
+                className="avatar"
+              />
+              <div className="request-info">
+                <h4>
+                  {req.from?.firstName} {req.from?.lastName}
+                </h4>
+                <p>@{req.from?.username}</p>
+              </div>
+              <div className="request-actions">
+                <button onClick={() => handleAccept(req._id)}>Accept</button>
+                <button onClick={() => handleReject(req._id)}>Reject</button>
+              </div>
             </div>
-            <div className="request-actions">
-              <button onClick={() => handleAccept(req._id)}>Accept</button>
-              <button onClick={() => handleReject(req._id)}>Reject</button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <Footer />

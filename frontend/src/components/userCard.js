@@ -1,4 +1,3 @@
-// components/UserCard.js
 import React, { useState } from "react";
 import { friendService } from "../services/api";
 import "../css/UserCard.css";
@@ -12,15 +11,26 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const handleSendRequest = async () => {
     try {
       setLoading(true);
+
+      let response;
       if (pendingRequest) {
         // resend request
-        await friendService.resendFriendRequest(user._id);
+        response = await friendService.resendFriendRequest(user._id);
       } else {
-        await friendService.sendFriendRequest(user._id);
+        response = await friendService.sendFriendRequest(user._id);
       }
+
+      // ✅ Show server message to user
+      alert(response.message);
       onRequestSent(); // refresh parent list
+
     } catch (err) {
-      alert(err.message);
+      // Get backend error message if available
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to send friend request";
+      alert(msg);
     } finally {
       setLoading(false);
     }

@@ -7,12 +7,16 @@ const router = express.Router();
 /* ---------- SEND FRIEND REQUEST ---------- */
 router.post('/request', auth, async (req, res) => {
   try {
+
+    console.log("Received friend request to:", req.body);
     const { toUserId } = req.body;
 
     if (!toUserId) {
+      console.log("No target user ID provided");
       return res.status(400).json({ message: 'Target user is required' });
     }
     if (req.user._id.toString() === toUserId) {
+      console.log("Cannot send friend request to oneself");
       return res.status(400).json({ message: 'Cannot send friend request to yourself' });
     }
 
@@ -21,6 +25,7 @@ router.post('/request', auth, async (req, res) => {
 
     // Already friends?
     if (toUser.friends.includes(req.user._id)) {
+      console.log("Users are already friends");
       return res.status(400).json({ message: 'Already friends with this user' });
     }
 
@@ -34,6 +39,7 @@ router.post('/request', auth, async (req, res) => {
     });
 
     if (existingRequest) {
+      console.log("A pending friend request already exists between these users");``
       return res.status(400).json({ message: 'Friend request already pending' });
     }
 
@@ -144,6 +150,16 @@ router.delete('/:friendId', auth, async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, { $pull: { friends: req.params.friendId } });
     await User.findByIdAndUpdate(req.params.friendId, { $pull: { friends: req.user._id } });
     res.json({ message: 'Friend removed successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.get('/requests/outgoing', auth, async (req, res) => {
+  try {
+    const requests = await FriendRequest.find({ from: req.user._id, status: 'pending' })
+      .populate('to', 'username firstName lastName profileImage');
+    res.json(requests);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

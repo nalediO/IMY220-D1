@@ -181,6 +181,16 @@ export const friendService = {
     });
     return res.data;
   },
+
+  getOutgoingRequests: async () => {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(`${API_BASE_URL}/friends/requests/outgoing`, {
+      headers: { Authorization: token ? `Bearer ${token}` : "" },
+    });
+    return res.data;
+  },
+
+
 };
 
 
