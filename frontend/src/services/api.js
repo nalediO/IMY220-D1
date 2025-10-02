@@ -66,11 +66,41 @@ export const userService = {
 
 // ====================== FRIEND SERVICE ======================
 export const friendService = {
-  // ✅ Send friend request -- backend expects { toUserId }
+  // ✅ Send friend request
   sendFriendRequest: async (friendId) => {
     if (!friendId) throw new Error("friendId is required");
 
     const token = localStorage.getItem("token");
+    const res = await axios.post(
+      `${API_BASE_URL}/friends/request`,
+      { toUserId: friendId },
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.data;
+  },
+
+  // ✅ Re-send a friend request
+  resendFriendRequest: async (friendId) => {
+    if (!friendId) throw new Error("friendId is required");
+
+    const token = localStorage.getItem("token");
+
+    // Optional: First cancel any old request to avoid duplicate errors
+    try {
+      await axios.delete(`${API_BASE_URL}/friends/request/${friendId}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+    } catch (err) {
+      // Ignore if request does not exist
+      console.warn("No existing request to cancel before resending:", err.message);
+    }
+
+    // Now send again
     const res = await axios.post(
       `${API_BASE_URL}/friends/request`,
       { toUserId: friendId },
@@ -131,6 +161,7 @@ export const friendService = {
     return res.data;
   },
 
+  // ✅ Get all pending friend requests (incoming & outgoing)
   getRequests: async () => {
     const token = localStorage.getItem("token");
     const res = await axios.get(`${API_BASE_URL}/friends/requests`, {
@@ -138,8 +169,8 @@ export const friendService = {
     });
     return res.data;
   },
-
 };
+
 
 
 // ====================== PROJECT SERVICE ======================
@@ -193,7 +224,8 @@ export const projectService = {
 
 updateProject: async (project, token) => {
   // ✅ Validate input
-  if (!project || !project._id) {
+  const projectId = project._id || project.id;
+  if (!projectId) {
     console.error("updateProject called without a valid ID:", project);
     throw new Error("Project ID is missing.");
   }

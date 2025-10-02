@@ -31,10 +31,10 @@ const LogInForm = () => {
     try {
       // Use the auth context login function
       await login(formData.email, formData.password);
-      
+
       // Redirect to home page on success
       navigate("/home2");
-      
+
     } catch (err) {
       console.error("Login error:", err);
       setError(err.message || "Login failed. Please check your credentials.");
@@ -46,7 +46,7 @@ const LogInForm = () => {
   return (
     <form onSubmit={handleSubmit} className="login-form">
       {error && <div className="error-message">{error}</div>}
-      
+
       <input
         type="email"
         name="email"
@@ -74,12 +74,7 @@ const LogInForm = () => {
       <p className="signup-redirect">
         Don't have an account? <a href="/signin">Sign up here</a>
       </p>
-
-      <div className="test-account">
-        <p>Test Account:</p>
-        <p>Email: test@test.com</p>
-        <p>Password: test1234</p>
-      </div>
+      
     </form>
   );
 };
