@@ -1,54 +1,43 @@
+// seedData.js
 const mongoose = require('mongoose');
+const path = require('path');
 const User = require('./models/User');
 const Project = require('./models/Project');
 const Checkin = require('./models/Checkin');
 const FriendRequest = require('./models/FriendRequest');
 require('dotenv').config();
 
-// Use Version_Control database
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/Version_Control';
-
-console.log('Using database: Version_Control');
-console.log('Connection string:', MONGODB_URI.replace(/:[^:]*@/, ':****@')); // Hide password
 
 async function seedDatabase() {
   try {
-    console.log('Connecting to Version_Control database...');
-    
+    console.log('Connecting to database...');
     await mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
-      useUnifiedTopology: true,
+      useUnifiedTopology: true
     });
-
-    if (mongoose.connection.db.databaseName !== 'Version_Control') {
-      console.log('Switching to Version_Control database...');
-      mongoose.connection.useDb('Version_Control');
-    }
-
-    console.log('✅ Using database:', mongoose.connection.db.databaseName);
-    
-    console.log('✅ Connected to Version_Control database successfully');
+    console.log('✅ Connected to database');
 
     // Clear existing data
-    console.log('Clearing existing data...');
     await User.deleteMany({});
     await Project.deleteMany({});
     await Checkin.deleteMany({});
     await FriendRequest.deleteMany({});
-    console.log('✅ Existing data cleared');
+    console.log('✅ Cleared old data');
 
-    // Create users
-    console.log('Creating users...');
-    const sampleUsers = [
+    // ================= USERS =================
+    const users = [
       {
         username: 'alice_dev',
         email: 'alice@test.com',
         password: 'test1234',
         firstName: 'Alice',
         lastName: 'Johnson',
-        profileImage: '/assets/profile.png',
-        bio: 'Fullstack developer passionate about React and Node.js',
+        birthday: new Date('1995-05-15'),
+        profileImage: '/uploads/alice.png',
+        bio: 'Frontend & backend developer passionate about React, Node.js, and MongoDB',
         programmingLanguages: ['JavaScript', 'React', 'Node.js', 'Python'],
+        friends: [] // will be updated
       },
       {
         username: 'bob_coder',
@@ -56,129 +45,133 @@ async function seedDatabase() {
         password: 'test1234',
         firstName: 'Bob',
         lastName: 'Smith',
-        profileImage: '/assets/profile.png',
-        bio: 'Frontend specialist with UX design background',
-        programmingLanguages: ['JavaScript', 'React', 'CSS', 'TypeScript'],
+        birthday: new Date('1992-09-22'),
+        profileImage: '/uploads/bob.png',
+        bio: 'Fullstack developer and UX enthusiast',
+        programmingLanguages: ['JavaScript', 'React', 'Node.js', 'CSS'],
+        friends: [] // will be updated
       },
       {
-        username: 'testuser',
-        email: 'test@test.com',
+        username: 'carol_tester',
+        email: 'carol@test.com',
         password: 'test1234',
-        firstName: 'Test',
-        lastName: 'User',
-        profileImage: '/assets/profile.png',
-        bio: 'Test account for development',
-        programmingLanguages: ['JavaScript', 'HTML', 'CSS'],
+        firstName: 'Carol',
+        lastName: 'Williams',
+        birthday: new Date('1998-01-10'),
+        profileImage: '/uploads/carol.png',
+        bio: 'QA engineer and Python developer',
+        programmingLanguages: ['Python', 'Selenium', 'JavaScript'],
+        friends: [] // will be updated
       }
     ];
-
-    const createdUsers = await User.insertMany(sampleUsers);
+    const createdUsers = await User.insertMany(users);
     console.log(`✅ Created ${createdUsers.length} users`);
 
-    // Create projects
-    console.log('Creating projects...');
-    const sampleProjects = [
+    // Add mutual friends
+    createdUsers[0].friends.push(createdUsers[1]._id); // Alice -> Bob
+    createdUsers[1].friends.push(createdUsers[0]._id); // Bob -> Alice
+    await createdUsers[0].save();
+    await createdUsers[1].save();
+
+    // ================= PROJECTS =================
+    const projects = [
       {
-        name: 'Weather Dashboard App',
-        description: 'A responsive weather application with real-time data and forecasts using React and OpenWeather API',
+        name: 'Weather Dashboard',
+        description: 'Real-time weather app with forecasts using React and OpenWeather API',
+        owner: createdUsers[0]._id,
+        members: [createdUsers[0]._id, createdUsers[1]._id], // Alice and Bob
         projectType: 'web-application',
         hashtags: ['React', 'JavaScript', 'API', 'CSS', 'OpenWeather'],
-        currentVersion: '2.1.0',
+        currentVersion: '2.0.0',
         isCheckedOut: false,
-        imageUrl: '/assets/weather-app.jpg',
+        checkedOutBy: null,
+        imageUrl: '/uploads/weather-app.jpg',
         files: [
-          { filename: 'App.js', fileUrl: '/files/weather-app/App.js' },
-          { filename: 'WeatherService.js', fileUrl: '/files/weather-app/WeatherService.js' },
-          { filename: 'styles.css', fileUrl: '/files/weather-app/styles.css' }
+          { originalName: 'App.js', storedName: 'App.js', fileUrl: '/uploads/App.js', mimetype: 'text/javascript' },
+          { originalName: 'WeatherService.js', storedName: 'WeatherService.js', fileUrl: '/uploads/WeatherService.js', mimetype: 'text/javascript' },
+          { originalName: 'styles.css', storedName: 'styles.css', fileUrl: '/uploads/styles.css', mimetype: 'text/css' }
         ]
       },
       {
-        name: 'Task Management System',
-        description: 'Collaborative task manager with real-time updates, drag-and-drop functionality, and team collaboration features',
+        name: 'Task Manager',
+        description: 'Collaborative task manager with drag-and-drop and real-time updates',
+        owner: createdUsers[1]._id,
+        members: [createdUsers[1]._id, createdUsers[2]._id], // Bob and Carol
         projectType: 'web-application',
         hashtags: ['React', 'Node.js', 'MongoDB', 'SocketIO', 'Express'],
-        currentVersion: '1.3.2',
+        currentVersion: '1.3.0',
         isCheckedOut: true,
-        imageUrl: '/assets/task-manager.jpg',
+        checkedOutBy: createdUsers[1]._id,
+        imageUrl: '/uploads/task-manager.jpg',
         files: [
-          { filename: 'index.html', fileUrl: '/files/task-manager/index.html' },
-          { filename: 'main.js', fileUrl: '/files/task-manager/main.js' },
-          { filename: 'database.js', fileUrl: '/files/task-manager/database.js' }
+          { originalName: 'index.html', storedName: 'index.html', fileUrl: '/uploads/index.html', mimetype: 'text/html' },
+          { originalName: 'main.js', storedName: 'main.js', fileUrl: '/uploads/main.js', mimetype: 'text/javascript' },
+          { originalName: 'database.js', storedName: 'database.js', fileUrl: '/uploads/database.js', mimetype: 'text/javascript' }
         ]
       }
     ];
-
-    const projectsWithOwners = sampleProjects.map((project, index) => ({
-      ...project,
-      owner: createdUsers[index % createdUsers.length]._id,
-      members: [createdUsers[index % createdUsers.length]._id]
-    }));
-
-    const createdProjects = await Project.insertMany(projectsWithOwners);
+    const createdProjects = await Project.insertMany(projects);
     console.log(`✅ Created ${createdProjects.length} projects`);
 
-    // Create checkins
-    console.log('Creating checkins...');
-    const sampleCheckins = [
+    // ================= CHECKINS =================
+    const checkins = [
       {
+        project: createdProjects[0]._id,
+        user: createdUsers[0]._id,
         message: 'Initial project setup with React components and basic styling',
         version: '1.0.0',
         files: [
-          { filename: 'package.json', fileUrl: '/files/package.json' },
-          { filename: 'App.js', fileUrl: '/files/App.js' }
-        ]
+          { filename: 'App.js', fileUrl: '/uploads/App.js' },
+          { filename: 'WeatherService.js', fileUrl: '/uploads/WeatherService.js' }
+        ],
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
       },
       {
+        project: createdProjects[0]._id,
+        user: createdUsers[1]._id,
         message: 'Added weather API integration with error handling and loading states',
         version: '1.1.0',
         files: [
-          { filename: 'WeatherService.js', fileUrl: '/files/WeatherService.js' },
-          { filename: 'ErrorBoundary.js', fileUrl: '/files/ErrorBoundary.js' }
-        ]
+          { filename: 'WeatherService.js', fileUrl: '/uploads/WeatherService.js' },
+          { filename: 'styles.css', fileUrl: '/uploads/styles.css' }
+        ],
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
       },
       {
-        message: 'Implemented responsive design for mobile devices and tablet screens',
-        version: '2.0.0',
+        project: createdProjects[1]._id,
+        user: createdUsers[2]._id,
+        message: 'Implemented task board with drag-and-drop functionality',
+        version: '1.0.0',
         files: [
-          { filename: 'styles.css', fileUrl: '/files/styles.css' },
-          { filename: 'responsive.css', fileUrl: '/files/responsive.css' }
-        ]
+          { filename: 'index.html', fileUrl: '/uploads/index.html' },
+          { filename: 'main.js', fileUrl: '/uploads/main.js' }
+        ],
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
       }
     ];
-
-    const checkinsWithReferences = sampleCheckins.map((checkin, index) => ({
-      ...checkin,
-      project: createdProjects[0]._id, // All checkins for first project
-      user: createdUsers[index % createdUsers.length]._id,
-      createdAt: new Date(Date.now() - index * 24 * 60 * 60 * 1000)
-    }));
-
-    const createdCheckins = await Checkin.insertMany(checkinsWithReferences);
+    const createdCheckins = await Checkin.insertMany(checkins);
     console.log(`✅ Created ${createdCheckins.length} checkins`);
 
+    // ================= FRIEND REQUESTS =================
+    const friendRequests = [
+      {
+        from: createdUsers[2]._id, // Carol
+        to: createdUsers[0]._id,   // Alice
+        status: 'pending'
+      }
+    ];
+    await FriendRequest.insertMany(friendRequests);
+    console.log('✅ Created friend request(s)');
+
     console.log('\n🎉 Database seeding completed successfully!');
-    console.log('\n📋 Test User Accounts:');
-    createdUsers.forEach(user => {
-      console.log(`   Email: ${user.email} | Password: test1234 | Username: ${user.username}`);
-    });
+    console.log('Test users:');
+    createdUsers.forEach(u => console.log(`- ${u.username} | ${u.email} | Password: test1234`));
 
-    console.log('\n📊 Database Statistics:');
-    console.log(`   Users: ${createdUsers.length}`);
-    console.log(`   Projects: ${createdProjects.length}`);
-    console.log(`   Checkins: ${createdCheckins.length}`);
-    console.log(`   Database: Version_Control`);
-
-  } catch (error) {
-    console.error('❌ Error seeding database:', error.message);
-    console.log('\n💡 TROUBLESHOOTING:');
-    console.log('1. Make sure MongoDB is running');
-    console.log('2. Check your connection string in .env file');
-    console.log('3. Try: docker-compose up -d (if using Docker)');
+  } catch (err) {
+    console.error('❌ Error seeding database:', err);
   } finally {
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.connection.close();
-      console.log('\n🔌 Database connection closed');
-    }
+    await mongoose.connection.close();
+    console.log('🔌 Database connection closed');
     process.exit(0);
   }
 }
