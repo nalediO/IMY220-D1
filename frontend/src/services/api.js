@@ -49,16 +49,39 @@ export const userService = {
     return res.json();
   },
 
-  updateProfile: async (id, data) => {
+  // updateProfile: async (id, data) => {
+  //   const token = localStorage.getItem("token");
+  //   const res = await fetch(`http://localhost:5000/api/users/${id}`, {
+  //     method: "PUT",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //     body: JSON.stringify(data),
+  //   });
+  //   if (!res.ok) throw new Error("Server error");
+  //   return res.json();
+  // },
+
+
+  updateProfile: async (id, data, isFormData = false) => {
     const token = localStorage.getItem("token");
+  
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+  
+    // ⚠️ Only add JSON header if NOT FormData
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
+  
     const res = await fetch(`http://localhost:5000/api/users/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
+      headers,
+      body: isFormData ? data : JSON.stringify(data),
     });
+  
     if (!res.ok) throw new Error("Server error");
     return res.json();
   },

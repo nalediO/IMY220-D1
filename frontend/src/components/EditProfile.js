@@ -4,7 +4,8 @@ import "../css/EditProfile.css";
 
 const EditProfile = ({ user, onCancel, onSave }) => {
   const [formData, setFormData] = useState(user);
-  const [preview, setPreview] = useState(user.profileImage || null);
+  const [preview, setPreview] = useState(user.profileImage ? `http://localhost:5000${user.profileImage}` : null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const handleChange = (e) => {
@@ -14,25 +15,44 @@ const EditProfile = ({ user, onCancel, onSave }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-      setFormData({ ...formData, profileImage: url });
+      setPreview(URL.createObjectURL(file));
+      setProfileImageFile(file);
     }
-  };
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+
     try {
-      const updatedUser = await userService.updateProfile(user._id, formData);
-      onSave(updatedUser); // Update Profile.js state
+      const payload = new FormData();
+      payload.append("firstName", formData.firstName || "");
+      payload.append("lastName", formData.lastName || "");
+      payload.append("username", formData.username || "");
+      payload.append("email", formData.email || "");
+      payload.append("birthday", formData.birthday || "");
+      payload.append("bio", formData.bio || "");
+
+      if (profileImageFile) {
+        payload.append("profileImage", profileImageFile); // MUST match multer field
+      }
+
+      const updatedUser = await userService.updateProfile(user._id, payload, true); // true = send as multipart/form-data
+      onSave(updatedUser);
+
+      // Update preview after successful upload
+      if (updatedUser.profileImage) {
+        setPreview(`http://localhost:5000${updatedUser.profileImage}`);
+        setProfileImageFile(null);
+      }
     } catch (err) {
-      console.error("Profile update failed:", err);
-      alert("Failed to update profile.");
+      console.error(err);
+      alert("Failed to update profile");
     } finally {
       setSaving(false);
     }
   };
+
 
   console.log(formData);
 
@@ -45,10 +65,7 @@ const EditProfile = ({ user, onCancel, onSave }) => {
         <div className="profile-picture-upload">
           <div className="avatar-preview">
             {preview ? (
-              <img
-                src={`http://localhost:5000/uploads/${preview.replace(/^\/?uploads\//, "")}`}
-                alt="Preview"
-              />
+              <img src={preview} alt="Profile" />
             ) : (
               <div className="avatar-placeholder">
                 {formData.firstName?.charAt(0)}
