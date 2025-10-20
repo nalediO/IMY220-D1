@@ -34,6 +34,8 @@ const EditProfile = ({ user, onCancel, onSave }) => {
     }
   };
 
+  console.log(formData);
+
   return (
     <form className="edit-profile-form" onSubmit={handleSubmit}>
       <h2>Edit Profile</h2>
@@ -43,7 +45,10 @@ const EditProfile = ({ user, onCancel, onSave }) => {
         <div className="profile-picture-upload">
           <div className="avatar-preview">
             {preview ? (
-              <img src={preview} alt="Preview" />
+              <img
+                src={`http://localhost:5000/uploads/${preview.replace(/^\/?uploads\//, "")}`}
+                alt="Preview"
+              />
             ) : (
               <div className="avatar-placeholder">
                 {formData.firstName?.charAt(0)}

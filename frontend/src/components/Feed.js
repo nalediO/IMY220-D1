@@ -207,14 +207,16 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
     <div className="activity-item">
       <div className="activity-header">
         <div className="user-info">
+
           <img
             src={
               targetUser.profileImage
-                ? `http://localhost:5000/uploads/${targetUser.profileImage}`
+                ? `http://localhost:5000/uploads/${targetUser.profileImage.replace(/^\/?uploads\//, "")}`
                 : "/assets/profile.png"
             }
             alt={targetUser.username || "User"}
             className="user-avatar"
+            onError={(e) => (e.target.src = "/assets/profile.png")}
           />
           <div className="user-details">
             <span className="username clickable" onClick={() => onUserClick(targetUser.username)}>

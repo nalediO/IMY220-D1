@@ -7,7 +7,11 @@ const ProjectPreview = ({ project }) => {
       {/* Image Preview */}
       {project.imageUrl && (
         <div className="project-image1">
-          <img src={project.imageUrl} alt={project.name} />
+          <img
+            src={`http://localhost:5000/uploads/${project.imageUrl.replace(/^\/?uploads\//, "")}`}
+            alt={project.name}
+            onError={(e) => (e.target.src = "/assets/default-project.jpg")}
+          />
         </div>
       )}
 
