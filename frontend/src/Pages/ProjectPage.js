@@ -75,7 +75,7 @@ const ProjectPage = () => {
 
       const blob = new Blob([fileContent], { type: "text/plain" });
       const formData = new FormData();
-      // ✅ field name must match multer.single('file')
+      //  field name must match multer.single('file')
       formData.append("file", new File([blob], selectedFile.originalName));
 
       const token = localStorage.getItem("token");
@@ -125,10 +125,38 @@ const ProjectPage = () => {
       link.click();
       link.remove();
 
-      window.URL.revokeObjectURL(url); // ✅ cleanup
+      window.URL.revokeObjectURL(url); 
     } catch (err) {
       console.error("Download error:", err);
       alert("Could not download file.");
+    }
+  };
+
+  const handleDeleteFile = async (storedName) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/files/${storedName}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!res.ok) throw new Error("Failed to delete file");
+  
+      // update project state after deletion
+      setProject((prev) => ({
+        ...prev,
+        files: prev.files.filter((file) => file.storedName !== storedName),
+      }));
+  
+      setSelectedFile(null);
+      setFileContent("");
+      alert("File deleted successfully ");
+    } catch (err) {
+      console.error("Error deleting file:", err);
+      alert("Could not delete file.");
     }
   };
 
