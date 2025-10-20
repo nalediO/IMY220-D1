@@ -6,7 +6,7 @@ const EditProject = ({ project, onSave, onCancel }) => {
   return (
     <CreateProject
       initialData={project}
-      onCreate={(formData) => onSave(formData, project._id)}   // ✅ include id
+      onCreate={(formData) => onSave(formData, project._id)}   //
       onCancel={onCancel}
       isInline={false}
     />

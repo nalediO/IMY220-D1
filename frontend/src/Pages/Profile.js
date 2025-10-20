@@ -6,7 +6,7 @@ import EditProfile from "../components/EditProfile";
 import ProjectList from "../components/ProjectList";
 import FriendsList from "../components/FriendsList";
 import CreateProject from "../components/CreateProject";
-import EditProject from "../components/EditProject";  // ✅ Import
+import EditProject from "../components/EditProject"; 
 import PendingRequests from "../components/PendingRequest";
 import { userService, projectService, friendService } from "../services/api";
 import "../css/Profile.css";
@@ -17,7 +17,7 @@ const Profile = () => {
   const [friends, setFriends] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
-  const [editingProject, setEditingProject] = useState(null); // ✅ track which project is being edited
+  const [editingProject, setEditingProject] = useState(null); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ const Profile = () => {
     }
   };
 
-  // ✅ Correct project update
+
   const handleUpdateProject = async (formData, projectId) => {
     try {
       if (!projectId) throw new Error("Project ID is missing.");
@@ -187,7 +187,7 @@ const Profile = () => {
                 </div>
                 <ProjectList
                   projects={userProjects}
-                  onUpdate={(p) => setEditingProject(p)} // ✅ pass project to Edit
+                  onUpdate={(p) => setEditingProject(p)} 
                   onDelete={handleProjectDelete}
                 />
               </div>

@@ -1,9 +1,15 @@
 import React, { useState } from "react";
 import { friendService } from "../services/api";
+import { useNavigate } from "react-router-dom";
 import "../css/UserCard.css";
+
+
+
 
 const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   // check if there's already a pending request for this user
   const pendingRequest = currentRequests.find((req) => req.toUserId === user._id);
@@ -20,7 +26,7 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
         response = await friendService.sendFriendRequest(user._id);
       }
 
-      // ✅ Show server message to user
+
       alert(response.message);
       onRequestSent(); // refresh parent list
 
@@ -39,9 +45,13 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const buttonText = pendingRequest ? "Resend Request" : "Send Friend Request";
 
   return (
-    <div className="user-card">
+    <div className="user-card" onClick={() => navigate(`/profile/${user._id}`)}>
       <img
-        src={user.profileImage || "/default-avatar.png"}
+        src={
+          user.profileImage
+            ? `http://localhost:5000/${user.profileImage.replace(/^\/?uploads\//, 'uploads/')}`
+            : "/assets/profile.png"
+        }
         alt={user.username}
         className="avatar"
       />
@@ -51,7 +61,13 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
         </h4>
         <p>@{user.username}</p>
       </div>
-      <button onClick={handleSendRequest} disabled={loading}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent card click
+          handleSendRequest();
+        }}
+        disabled={loading}
+      >
         {loading ? "Sending..." : buttonText}
       </button>
     </div>

@@ -106,7 +106,8 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
         alert("Already friends.");
         return;
       }
-
+      
+      // Call service
       const resp = await friendService.sendFriendRequest(targetUser._id);
 
       setActivities((prev) =>
@@ -220,7 +221,17 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
     <div className="activity-item">
       <div className="activity-header">
         <div className="user-info">
-          <img src={targetUser.profileImage || "/assets/profile.png"} alt={targetUser.username || "User"} className="user-avatar" />
+
+          <img
+            src={
+              targetUser.profileImage
+                ? `http://localhost:5000/uploads/${targetUser.profileImage.replace(/^\/?uploads\//, "")}`
+                : "/assets/profile.png"
+            }
+            alt={targetUser.username || "User"}
+            className="user-avatar"
+            onError={(e) => (e.target.src = "/assets/profile.png")}
+          />
           <div className="user-details">
             <span className="username clickable" onClick={() => onUserClick(targetUser.username)}>
               {targetUser.username || "Unknown"}
@@ -241,11 +252,7 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
         <p className="activity-message">{activity.message || "checked in"}</p>
 
         {activity.project?.image && (
-          <img
-            src={activity.project.image}
-            alt={activity.project.name || "Project"}
-            className="project-image"
-          />
+          <img src={activity.project.image} alt={activity.project.name || "Project"} className="project-image" />
         )}
 
         {Array.isArray(activity.files) && activity.files.length > 0 && (

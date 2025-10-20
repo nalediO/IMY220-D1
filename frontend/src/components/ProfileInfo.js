@@ -12,12 +12,17 @@ const ProfileInfo = ({ user, onEdit }) => {
     ? user.programmingLanguages.join(", ")
     : "None";
 
+    console.log(user);
+
   return (
     <div className="profile-info-card">
       <div className="profile-header">
         <div className="avatar">
           {user.profileImage ? (
-            <img src={user.profileImage} alt="Profile" />
+            <img
+              src={`http://localhost:5000/${user.profileImage.replace(/^\/uploads\//, 'uploads/')}`}
+              alt="Profile"
+            />
           ) : (
             <div className="avatar-placeholder1">{firstLetter}{lastLetter}</div>
           )}

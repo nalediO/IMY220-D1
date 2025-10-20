@@ -1,8 +1,8 @@
 // pages/UsersPage.js
 import React, { useEffect, useState } from "react";
-import { userService } from "../services/api";
-import { friendService } from "../services/api";
-import UserCard from "../components/UserCard";
+import { userService } from "../services/api";   // only userService here
+import { friendService } from "../services/api"; // ✅ import friendService separately
+import UserCard from "../components/userCard";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
 import "../css/UserPage.css";

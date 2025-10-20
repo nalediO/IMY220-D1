@@ -50,16 +50,39 @@ export const userService = {
     return res.json();
   },
 
-  updateProfile: async (id, data) => {
+  // updateProfile: async (id, data) => {
+  //   const token = localStorage.getItem("token");
+  //   const res = await fetch(`http://localhost:5000/api/users/${id}`, {
+  //     method: "PUT",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //     body: JSON.stringify(data),
+  //   });
+  //   if (!res.ok) throw new Error("Server error");
+  //   return res.json();
+  // },
+
+
+  updateProfile: async (id, data, isFormData = false) => {
     const token = localStorage.getItem("token");
+  
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+  
+
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
+  
     const res = await fetch(`http://localhost:5000/api/users/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
+      headers,
+      body: isFormData ? data : JSON.stringify(data),
     });
+  
     if (!res.ok) throw new Error("Server error");
     return res.json();
   },
@@ -74,12 +97,21 @@ export const userService = {
     if (!res.ok) throw new Error("Failed to fetch users");
     return res.json();
   },
+
+  getUserById: async (id) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/users/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to fetch user");
+    return res.json();
+  },
   
 };
 
 // ====================== FRIEND SERVICE ======================
 export const friendService = {
-  // ✅ Send friend request
+  //  Send friend request
   sendFriendRequest: async (friendId) => {
     if (!friendId) throw new Error("friendId is required");
 
@@ -97,7 +129,7 @@ export const friendService = {
     return res.data;
   },
 
-  // ✅ Re-send a friend request
+  //  Re-send a friend request
   resendFriendRequest: async (friendId) => {
     if (!friendId) throw new Error("friendId is required");
 
@@ -127,7 +159,7 @@ export const friendService = {
     return res.data;
   },
 
-  // ✅ Accept a friend request
+  //  Accept a friend request
   acceptFriendRequest: async (requestId) => {
     if (!requestId) throw new Error("requestId is required");
     const token = localStorage.getItem("token");
@@ -139,7 +171,7 @@ export const friendService = {
     return res.data;
   },
 
-  // ✅ Reject a friend request
+  //  Reject a friend request
   rejectFriendRequest: async (requestId) => {
     if (!requestId) throw new Error("requestId is required");
     const token = localStorage.getItem("token");
@@ -151,7 +183,7 @@ export const friendService = {
     return res.data;
   },
 
-  // ✅ Cancel your own outgoing request
+  //  Cancel your own outgoing request
   cancelFriendRequest: async (requestId) => {
     if (!requestId) throw new Error("requestId is required");
     const token = localStorage.getItem("token");
@@ -162,10 +194,10 @@ export const friendService = {
     return res.data;
   },
 
-  // ✅ Get all friends of current user
+  //  Get all friends of current user
   getFriends: () => apiRequest("/friends"),
 
-  // ✅ Remove an existing friend
+  //  Remove an existing friend
   unfriend: async (friendId) => {
     const token = localStorage.getItem("token");
     const res = await axios.delete(`${API_BASE_URL}/friends/${friendId}`, {
@@ -174,7 +206,7 @@ export const friendService = {
     return res.data;
   },
 
-  // ✅ Get all pending friend requests (incoming & outgoing)
+  //  Get all pending friend requests (incoming & outgoing)
   getRequests: async () => {
     const token = localStorage.getItem("token");
     const res = await axios.get(`${API_BASE_URL}/friends/requests`, {
@@ -245,7 +277,7 @@ export const projectService = {
   },
 
 updateProject: async (project, token) => {
-  // ✅ Validate input
+  //  Validate input
   const projectId = project._id || project.id;
   if (!projectId) {
     console.error("updateProject called without a valid ID:", project);
@@ -254,23 +286,21 @@ updateProject: async (project, token) => {
 
   console.log("updateProject received:", project._id);
 
-  // ✅ Build form data
+  //  Build form data
   const formData = new FormData();
   // Send the project data (excluding files and image) as JSON
   const { newFiles, newImage, ...projectData } = project;
   formData.append("project", JSON.stringify(projectData));
 
-  // ✅ Attach new files, if any
+
   if (Array.isArray(newFiles) && newFiles.length > 0) {
     newFiles.forEach(file => formData.append("files", file));
   }
 
-  // ✅ Attach new image, if provided
   if (newImage) {
     formData.append("image", newImage);
   }
 
-  // ✅ Send PUT request to update
   const res = await axios.put(
     `${API_BASE_URL}/projects/${project._id}`,
     formData,
@@ -314,11 +344,11 @@ export const checkinService = {
     const token = localStorage.getItem("token");
     const formData = new FormData();
 
-    // ✅ Attach message + version
+    //  Attach message + version
     formData.append("message", message);
     formData.append("version", version);
 
-    // ✅ Attach files
+    //  Attach files
     files.forEach((file) => {
       formData.append("files", file);
     });
@@ -327,7 +357,7 @@ export const checkinService = {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        // ⚠️ Do NOT set Content-Type manually – browser will set multipart boundary
+        //  Do NOT set Content-Type manually – browser will set multipart boundary
       },
       body: formData,
     });
