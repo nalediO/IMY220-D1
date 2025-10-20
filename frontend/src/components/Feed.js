@@ -106,7 +106,7 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
         alert("Already friends.");
         return;
       }
-      
+
       // Call service
       const resp = await friendService.sendFriendRequest(targetUser._id);
 
@@ -252,7 +252,7 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
         <p className="activity-message">{activity.message || "checked in"}</p>
 
         {activity.project?.image && (
-          <img src={activity.project.image} alt={activity.project.name || "Project"} className="project-image" />
+          <img src={activity.project.imageUrl} alt={activity.project.name || "Project"} className="project-image" />
         )}
 
         {Array.isArray(activity.files) && activity.files.length > 0 && (
