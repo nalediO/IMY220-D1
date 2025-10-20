@@ -4,7 +4,7 @@ import { checkinService, friendService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import "../css/Feed.css";
 
-const Feed = ({ feedType, projects = [], onSearch }) => {
+const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,7 +30,6 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
         );
         allCheckins = results.flat().filter(Boolean);
       } else {
-
         const recentCheckins = [];
         for (const project of projects) {
           try {
@@ -44,13 +43,13 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
       }
 
       if (feedType === "local" && user) {
-      const friends = await friendService.getFriends();
-      const friendIds = friends.map((f) => f._id.toString());
+        const friends = await friendService.getFriends();
+        const friendIds = friends.map((f) => f._id.toString());
 
-      allCheckins = allCheckins.filter(
-        (checkin) =>
-          checkin.user && friendIds.includes(checkin.user._id.toString())
-      );
+        allCheckins = allCheckins.filter(
+          (checkin) =>
+            checkin.user && friendIds.includes(checkin.user._id.toString())
+        );
       }
 
       const sorted = allCheckins.sort(
@@ -69,6 +68,7 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
     fetchActivities();
   }, [fetchActivities]);
 
+  // Sort handler
   const handleSortChange = (option) => {
     setSortOption(option);
     if (option === "recent") {
@@ -88,9 +88,8 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
     if (onSearch) onSearch(username);
   };
 
-  // send friend request
+  // Send friend request
   const handleAddFriend = async (targetUser) => {
-    console.log("Sending friend request to:", targetUser._id)
     try {
       if (!user) {
         alert("You must be logged in to send friend requests.");
@@ -100,16 +99,16 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
         alert("Invalid user.");
         return;
       }
-      // quick local check
-      const isFriend = (user.friends || []).some((id) => id.toString() === targetUser._id.toString());
+      const isFriend = (user.friends || []).some(
+        (id) => id.toString() === targetUser._id.toString()
+      );
       if (isFriend) {
         alert("Already friends.");
         return;
       }
-      
-      // Call service
+
       const resp = await friendService.sendFriendRequest(targetUser._id);
-      // mark requestSent on activities for this user
+
       setActivities((prev) =>
         prev.map((act) =>
           act.user && act.user._id && act.user._id.toString() === targetUser._id.toString()
@@ -120,7 +119,6 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
       alert(resp.message || `Friend request sent to ${targetUser.username || "user"}`);
     } catch (err) {
       console.error("Failed to send friend request:", err);
-      // Show server message if present (axios error shape)
       const serverMsg = err?.response?.data?.message || err?.message || "Error sending friend request";
       alert(serverMsg);
     }
@@ -144,14 +142,28 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
     );
   }
 
-  if (!activities || activities.length === 0) {
+  // ================== SEARCH FILTER ==================
+  const filteredActivities = activities.filter((activity) => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+
+    const messageMatch = activity.message?.toLowerCase().includes(searchLower);
+    const typeMatch = activity.project?.projectType?.toLowerCase().includes(searchLower);
+    const hashtagMatch = activity.project?.hashtags?.some((tag) =>
+      tag.toLowerCase().includes(searchLower)
+    );
+
+    return messageMatch || typeMatch || hashtagMatch;
+  });
+
+  if (!filteredActivities || filteredActivities.length === 0) {
     return (
       <div className="feed-empty">
-        <h3>No activity yet</h3>
+        <h3>No activity found</h3>
         <p>
           {feedType === "local"
-            ? "No recent activity in your projects. Check in some changes to see them here!"
-            : "No recent activity across all projects."}
+            ? "No recent activity in your projects matching your search."
+            : "No recent activity across all projects matching your search."}
         </p>
       </div>
     );
@@ -170,7 +182,7 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
         </div>
       </div>
 
-      {activities.map((activity) => (
+      {filteredActivities.map((activity) => (
         <ActivityItem
           key={activity._id || Math.random()}
           activity={activity}
@@ -184,6 +196,7 @@ const Feed = ({ feedType, projects = [], onSearch }) => {
   );
 };
 
+// =================== ACTIVITY ITEM ===================
 const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentUser }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -222,24 +235,30 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
         {canAddFriend && activity.requestSent && (
           <button className="add-friend-btn pending" disabled>⏳ Request Sent</button>
         )}
-
-        <span className="type-badge">{activity.type || "Check-in"}</span>
       </div>
 
       <div className="activity-content">
         <p className="activity-message">{activity.message || "checked in"}</p>
 
         {activity.project?.image && (
-          <img src={activity.project.image} alt={activity.project.name || "Project"} className="project-image" />
+          <img
+            src={activity.project.image}
+            alt={activity.project.name || "Project"}
+            className="project-image"
+          />
         )}
 
         {Array.isArray(activity.files) && activity.files.length > 0 && (
           <div className="files-list1">
             <span className="files-label">Files updated:</span>
             {activity.files.slice(0, 3).map((file, index) => (
-              <span key={index} className="file-tag">{file.filename}</span>
+              <span key={index} className="file-tag">
+                {file.name || file.filename || file.originalName || `File ${index + 1}`}
+              </span>
             ))}
-            {activity.files.length > 3 && <span className="more-files">+{activity.files.length - 3} more</span>}
+            {activity.files.length > 3 && (
+              <span className="more-files">+{activity.files.length - 3} more</span>
+            )}
           </div>
         )}
 
@@ -253,20 +272,18 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
 
       <div className="activity-footer">
         <div className="project-info">
-          <span className="project-name1">{activity.project?.name || "Unnamed Project"}</span>
+          <span className="project-name1">
+            {activity.project?.name || "Unnamed Project"}
+          </span>
           {activity.project?.hashtags?.length > 0 && (
             <div className="project-tags">
               {activity.project.hashtags.slice(0, 3).map((tag, idx) => (
-                <button key={idx} className="tag" onClick={() => onTagClick(tag)}>#{tag}</button>
+                <button key={idx} className="tag" onClick={() => onTagClick(tag)}>
+                  #{tag}
+                </button>
               ))}
             </div>
           )}
-        </div>
-
-        <div className="activity-actions">
-          <button className="action-btn">👍</button>
-          <button className="action-btn">💬</button>
-          <button className="action-btn">↗️</button>
         </div>
       </div>
     </div>
