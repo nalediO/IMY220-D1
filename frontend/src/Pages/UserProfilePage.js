@@ -4,6 +4,7 @@ import { userService, friendService } from "../services/api";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
 
+
 const UserProfilePage = () => {
   const { userId } = useParams();
   const [user, setUser] = useState(null);

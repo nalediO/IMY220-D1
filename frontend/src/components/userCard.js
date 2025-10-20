@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { friendService } from "../services/api";
+import { useNavigate } from "react-router-dom";
 import "../css/UserCard.css";
 
 
-const navigate = useNavigate();
+
 
 const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   // check if there's already a pending request for this user
   const pendingRequest = currentRequests.find((req) => req.toUserId === user._id);
@@ -44,7 +47,11 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
   return (
     <div className="user-card" onClick={() => navigate(`/profile/${user._id}`)}>
       <img
-        src={user.profileImage || "/default-avatar.png"}
+        src={
+          user.profileImage
+            ? `http://localhost:5000/${user.profileImage.replace(/^\/?uploads\//, 'uploads/')}`
+            : "/assets/profile.png"
+        }
         alt={user.username}
         className="avatar"
       />

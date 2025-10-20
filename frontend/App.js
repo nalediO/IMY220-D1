@@ -10,7 +10,7 @@ import ProjectsCPage from "./src/Pages/ProjectsCPage";
 import ProjectPage from "./src/Pages/ProjectPage";
 import ProjectsPageAll from "./src/Pages/ProjectPageAll";
 import UserPage from "./src/Pages/UserPage"; 
-import UserProfilePage from "./Pages/UserProfilePage";
+import UserProfilePage from "./src/Pages/UserProfilePage";
 
 import { AuthProvider } from "./src/contexts/AuthContext";
 
