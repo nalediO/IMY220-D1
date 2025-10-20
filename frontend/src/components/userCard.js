@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { friendService } from "../services/api";
 import "../css/UserCard.css";
 
+
+const navigate = useNavigate();
+
 const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +23,7 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
         response = await friendService.sendFriendRequest(user._id);
       }
 
-      // ✅ Show server message to user
+
       alert(response.message);
       onRequestSent(); // refresh parent list
 
@@ -39,7 +42,7 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
   const buttonText = pendingRequest ? "Resend Request" : "Send Friend Request";
 
   return (
-    <div className="user-card">
+    <div className="user-card" onClick={() => navigate(`/profile/${user._id}`)}>
       <img
         src={user.profileImage || "/default-avatar.png"}
         alt={user.username}
@@ -51,7 +54,13 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
         </h4>
         <p>@{user.username}</p>
       </div>
-      <button onClick={handleSendRequest} disabled={loading}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent card click
+          handleSendRequest();
+        }}
+        disabled={loading}
+      >
         {loading ? "Sending..." : buttonText}
       </button>
     </div>

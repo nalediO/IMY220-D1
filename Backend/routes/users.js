@@ -76,7 +76,8 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password')
-      .populate('friends', 'username firstName lastName profileImage');
+      .populate('friends', 'username firstName lastName profileImage')
+      .populate("projects", "title description");;
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 

@@ -9,7 +9,8 @@ import Profile from "./src/Pages/Profile";
 import ProjectsCPage from "./src/Pages/ProjectsCPage";
 import ProjectPage from "./src/Pages/ProjectPage";
 import ProjectsPageAll from "./src/Pages/ProjectPageAll";
-import UserPage from "./src/Pages/UserPage"; // Make sure this file exists
+import UserPage from "./src/Pages/UserPage"; 
+import UserProfilePage from "./Pages/UserProfilePage";
 
 import { AuthProvider } from "./src/contexts/AuthContext";
 
@@ -26,6 +27,7 @@ const App = () => {
           <Route path="/home2" element={<Home2 />} />
           <Route path="/Profile" element={<Profile />} />
           <Route path="/UserPage" element={<UserPage />} />
+          <Route path="/profile/:userId" element={<UserProfilePage />} />
 
           {/* Projects pages */}
           <Route path="/ProjectsCPage" element={<ProjectsCPage />} />
