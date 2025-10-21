@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { userService, friendService } from "../services/api";
+import Nav from "../components/Nav";
+import Footer from "../components/footer";
+import "../css/UserProfile.css";
 
 const UserProfilePage = () => {
   const { userId } = useParams();
@@ -46,43 +49,45 @@ const UserProfilePage = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen text-gray-500">
+      <div className="user-profile-loading">
         Loading profile...
       </div>
     );
 
   if (!user)
     return (
-      <div className="flex justify-center items-center h-screen text-red-500">
+      <div className="user-profile-error">
         User not found.
       </div>
     );
 
   return (
-    <main className="min-h-screen flex flex-col bg-gray-50">
-      {/* Profile Header */}
-      <div className="flex flex-col items-center mt-10 px-6">
-        <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl p-6 text-center">
+    <main className="user-profile-container">
+      <Nav />
+
+      <div className="user-profile-content">
+        {/* Profile Header */}
+        <div className="profile-header-card">
           <img
             src={user.profileImage || "/default-avatar.png"}
             alt={user.username}
-            className="w-32 h-32 rounded-full mx-auto border-4 border-blue-500 shadow-md"
+            className="profile-image"
           />
-          <h2 className="text-2xl font-semibold mt-4 text-gray-800">
+          <h2 className="profile-name">
             {user.firstName} {user.lastName}
           </h2>
-          <p className="text-gray-500">@{user.username}</p>
+          <p className="profile-username">@{user.username}</p>
 
-          <div className="mt-4">
+          <div className="friend-status-container">
             {isFriend ? (
               <button
                 onClick={handleUnfriend}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition-all"
+                className="unfriend-button"
               >
                 Unfriend
               </button>
             ) : (
-              <p className="text-sm text-gray-400 italic">
+              <p className="not-friends-text">
                 (You are not friends)
               </p>
             )}
@@ -90,92 +95,94 @@ const UserProfilePage = () => {
         </div>
 
         {/* Profile Details */}
-        <div className="bg-white rounded-2xl shadow-md w-full max-w-2xl mt-6 p-6">
+        <div className="profile-details-card">
           {isFriend ? (
             <>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              <h3 className="profile-section-title">
                 Full Profile
               </h3>
-              <div className="text-gray-600 space-y-2">
+              <div className="profile-info">
                 <p>
-                  <span className="font-medium text-gray-800">Email:</span>{" "}
+                  <span className="info-label">Email:</span>{" "}
                   {user.email}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-800">Bio:</span>{" "}
+                  <span className="info-label">Bio:</span>{" "}
                   {user.bio || "No bio yet"}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-800">Birthday:</span>{" "}
+                  <span className="info-label">Birthday:</span>{" "}
                   {user.birthday || "Not provided"}
                 </p>
               </div>
 
               {/* Projects */}
-              <div className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              <div style={{marginTop: '1.5rem'}}>
+                <h3 className="profile-section-title">
                   Projects
                 </h3>
                 {user.projects?.length ? (
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ul className="projects-grid">
                     {user.projects.map((p) => (
                       <li
                         key={p._id}
-                        className="p-4 bg-blue-50 rounded-xl border border-blue-200 shadow-sm hover:bg-blue-100 transition"
+                        className="project-card"
                       >
-                        <h4 className="font-semibold text-gray-800">
+                        <h4 className="project-title">
                           {p.title}
                         </h4>
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="project-description">
                           {p.description || "No description provided."}
                         </p>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-gray-500">No projects available.</p>
+                  <p className="no-projects-text">No projects available.</p>
                 )}
               </div>
 
               {/* Friends */}
-              <div className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              <div style={{marginTop: '1.5rem'}}>
+                <h3 className="profile-section-title">
                   Friends
                 </h3>
                 {user.friends?.length ? (
-                  <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <ul className="friends-grid">
                     {user.friends.map((f) => (
                       <li
                         key={f._id}
-                        className="flex flex-col items-center bg-gray-50 p-3 rounded-lg shadow-sm hover:shadow-md transition"
+                        className="friend-card"
                       >
-                        <Link to={`/profile/${f._id}`} className="flex flex-col items-center">
+                        <a href={`/profile/${f._id}`}>
                           <img
                             src={f.profileImage || "/default-avatar.png"}
                             alt={f.username}
-                            className="w-16 h-16 rounded-full border border-gray-300"
+                            className="friend-image"
                           />
-                          <p className="mt-2 text-sm text-gray-700 font-medium">
+                          <p className="friend-name">
                             {f.firstName} {f.lastName}
                           </p>
-                        </Link>
+                        </a>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-gray-500">No friends yet.</p>
+                  <p className="no-friends-text">No friends yet.</p>
                 )}
               </div>
             </>
           ) : (
-            <div className="text-center text-gray-500">
-              <p className="text-lg">
+            <div className="non-friends-message">
+              <p className="non-friends-text">
                 Only name and profile picture are visible for non-friends.
               </p>
             </div>
           )}
         </div>
       </div>
+
+      <Footer />
     </main>
   );
 };
