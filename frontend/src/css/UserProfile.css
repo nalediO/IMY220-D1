@@ -21,6 +21,7 @@
     align-items: center;
     height: 100vh;
     color: #ef4444;
+    
   }
   
   /* Main Content Layout */
@@ -30,6 +31,7 @@
     align-items: center;
     margin-top: 2.5rem;
     padding: 0 1.5rem;
+    height: 77vh;
   }
   
   /* Profile Header Card */
