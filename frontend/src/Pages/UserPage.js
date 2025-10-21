@@ -1,7 +1,7 @@
 // pages/UsersPage.js
 import React, { useEffect, useState } from "react";
 import { userService } from "../services/api";   // only userService here
-import { friendService } from "../services/api"; 
+import { friendService } from "../services/api"; // ✅ import friendService separately
 import UserCard from "../components/userCard";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
@@ -12,23 +12,24 @@ const UsersPage = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(""); // ✅ search state
 
   const fetchData = async () => {
     try {
       setLoading(true);
-  
+
       // Get all users
       const allUsers = await userService.getAllUsers();
       setUsers(allUsers);
-  
+
       // Get incoming requests
       const incoming = await friendService.getRequests();
-  
+
       // Get outgoing requests
       const outgoing = await friendService.getOutgoingRequests();
-  
+
       setIncomingRequests(incoming);
-      setPendingRequests(outgoing); // now pending requests show correctly
+      setPendingRequests(outgoing);
     } catch (err) {
       console.error("Error fetching users:", err);
     } finally {
@@ -40,7 +41,6 @@ const UsersPage = () => {
     fetchData();
   }, []);
 
-  // ✅ Accept incoming request
   const handleAccept = async (requestId) => {
     try {
       await friendService.acceptFriendRequest(requestId);
@@ -50,7 +50,6 @@ const UsersPage = () => {
     }
   };
 
-  // ✅ Reject incoming request
   const handleReject = async (requestId) => {
     try {
       await friendService.rejectFriendRequest(requestId);
@@ -62,23 +61,44 @@ const UsersPage = () => {
 
   if (loading) return <p>Loading users...</p>;
 
+  // ✅ Filter users based on search
+  const filteredUsers = users.filter((user) => {
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+    return (
+      fullName.includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
-
-
-    <main >
+    <main>
       <Nav />
 
       <div className="users-page">
         <h2>All Users</h2>
+
+        {/* ✅ Search input */}
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+
         <div className="users-list">
-          {users.map((user) => (
-            <UserCard
-              key={user._id}
-              user={user}
-              currentRequests={pendingRequests}
-              onRequestSent={fetchData}
-            />
-          ))}
+          {filteredUsers.length === 0 ? (
+            <p>No users found</p>
+          ) : (
+            filteredUsers.map((user) => (
+              <UserCard
+                key={user._id}
+                user={user}
+                currentRequests={pendingRequests}
+                onRequestSent={fetchData}
+              />
+            ))
+          )}
         </div>
 
         <h2>Incoming Friend Requests</h2>

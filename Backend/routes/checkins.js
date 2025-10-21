@@ -21,8 +21,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
-
-// ✅ Create a new check-in with file upload
 router.post('/', auth, upload.array('files'), async (req, res) => {
   try {
     const { projectId, message, version } = req.body;

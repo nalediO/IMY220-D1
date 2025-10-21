@@ -231,7 +231,7 @@ const ProjectPage = () => {
           <p>{project.description}</p>
           <div className="project-meta">
             <span>Version: {project.currentVersion || "1.0.0"}</span>
-            <span>Type: {project.projectType}</span>
+            <span>Type: {project.projectType || "Desktop"}</span>
             <button onClick={() => setIsEditing(true)} className="edit-btn">
               Edit Project
             </button>

@@ -170,7 +170,12 @@ const Home = () => {
           </div>
 
           <section className="feed-section">
-            <Feed feedType={feedType} projects={projects} onSearch={handleSearch} />
+            <Feed
+              feedType={feedType}
+              projects={projects}
+              onSearch={handleSearch}
+              searchQuery={searchQuery}
+            />
           </section>
         </div>
       </div>

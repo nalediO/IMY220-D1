@@ -9,8 +9,7 @@ import Profile from "./src/Pages/Profile";
 import ProjectsCPage from "./src/Pages/ProjectsCPage";
 import ProjectPage from "./src/Pages/ProjectPage";
 import ProjectsPageAll from "./src/Pages/ProjectPageAll";
-import UserPage from "./src/Pages/UserPage"; 
-import UserProfilePage from "./src/Pages/UserProfilePage";
+import UserPage from "./src/Pages/UserPage"; // Make sure this file exists
 
 import { AuthProvider } from "./src/contexts/AuthContext";
 
