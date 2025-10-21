@@ -63,7 +63,7 @@ const UserCard = ({ user, currentRequests, onRequestSent }) => {
       </div>
       <button
         onClick={(e) => {
-          e.stopPropagation(); // prevent card click
+          e.stopPropagation(); 
           handleSendRequest();
         }}
         disabled={loading}

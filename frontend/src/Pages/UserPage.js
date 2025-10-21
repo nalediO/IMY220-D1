@@ -1,7 +1,7 @@
 // pages/UsersPage.js
 import React, { useEffect, useState } from "react";
 import { userService } from "../services/api";   // only userService here
-import { friendService } from "../services/api"; // ✅ import friendService separately
+import { friendService } from "../services/api"; //  import friendService separately
 import UserCard from "../components/userCard";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
@@ -12,7 +12,7 @@ const UsersPage = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); // ✅ search state
+  const [searchTerm, setSearchTerm] = useState(""); //  search state
 
   const fetchData = async () => {
     try {
@@ -61,7 +61,7 @@ const UsersPage = () => {
 
   if (loading) return <p>Loading users...</p>;
 
-  // ✅ Filter users based on search
+  //  Filter users based on search
   const filteredUsers = users.filter((user) => {
     const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
     return (
@@ -77,7 +77,7 @@ const UsersPage = () => {
       <div className="users-page">
         <h2>All Users</h2>
 
-        {/* ✅ Search input */}
+        {/*  Search input */}
         <input
           type="text"
           placeholder="Search users..."
@@ -107,7 +107,7 @@ const UsersPage = () => {
           {incomingRequests.map((req) => (
             <div key={req._id} className="incoming-request-card">
               <img
-                src={req.from?.profileImage || "/default-avatar.png"}
+                src={req.from?.profileImage ? `http://localhost:5000${req.from?.profileImage}`: "/assets/profile.png"}
                 alt={req.from?.username}
                 className="avatar"
               />

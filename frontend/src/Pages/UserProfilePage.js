@@ -69,7 +69,7 @@ const UserProfilePage = () => {
         {/* Profile Header */}
         <div className="profile-header-card">
           <img
-            src={user.profileImage || "/default-avatar.png"}
+            src={user.profileImage ? `http://localhost:5000/${user.profileImage.replace(/^\/?uploads\//, 'uploads/')}` : "/assets/profile.png"}
             alt={user.username}
             className="profile-image"
           />
@@ -117,7 +117,7 @@ const UserProfilePage = () => {
               </div>
 
               {/* Projects */}
-              <div style={{marginTop: '1.5rem'}}>
+              <div style={{ marginTop: '1.5rem' }}>
                 <h3 className="profile-section-title">
                   Projects
                 </h3>
@@ -143,7 +143,7 @@ const UserProfilePage = () => {
               </div>
 
               {/* Friends */}
-              <div style={{marginTop: '1.5rem'}}>
+              <div style={{ marginTop: '1.5rem' }}>
                 <h3 className="profile-section-title">
                   Friends
                 </h3>
@@ -156,7 +156,7 @@ const UserProfilePage = () => {
                       >
                         <a href={`/profile/${f._id}`}>
                           <img
-                            src={f.profileImage || "/default-avatar.png"}
+                            src={f.profileImage ? `http://localhost:5000/${f.profileImage.replace(/^\/?uploads\//, 'uploads/')}` : "/assets/profile.png"}
                             alt={f.username}
                             className="friend-image"
                           />

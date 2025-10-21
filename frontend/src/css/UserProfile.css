@@ -3,7 +3,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: #f9fafb;
+    background-color: #111827; 
   }
   
   /* Loading and Error States */
@@ -31,12 +31,13 @@
     align-items: center;
     margin-top: 2.5rem;
     padding: 0 1.5rem;
-    height: 77vh;
+    margin-bottom:2.5rem;
+
   }
   
   /* Profile Header Card */
   .profile-header-card {
-    background-color: white;
+    background-color: #2f3542; 
     border-radius: 1rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     width: 100%;
@@ -93,7 +94,7 @@
   
   /* Profile Details Card */
   .profile-details-card {
-    background-color: white;
+    background-color: #2f3542; 
     border-radius: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     width: 100%;
