@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { userService, friendService } from "../services/api";
-import Nav from "../components/Nav";
-import Footer from "../components/footer";
-
 
 const UserProfilePage = () => {
   const { userId } = useParams();
@@ -63,10 +60,8 @@ const UserProfilePage = () => {
 
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
-      <Nav />
-
+      {/* Profile Header */}
       <div className="flex flex-col items-center mt-10 px-6">
-        {/* Profile Header */}
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl p-6 text-center">
           <img
             src={user.profileImage || "/default-avatar.png"}
@@ -154,7 +149,7 @@ const UserProfilePage = () => {
                         key={f._id}
                         className="flex flex-col items-center bg-gray-50 p-3 rounded-lg shadow-sm hover:shadow-md transition"
                       >
-                        <a href={`/profile/${f._id}`}>
+                        <Link to={`/profile/${f._id}`} className="flex flex-col items-center">
                           <img
                             src={f.profileImage || "/default-avatar.png"}
                             alt={f.username}
@@ -163,7 +158,7 @@ const UserProfilePage = () => {
                           <p className="mt-2 text-sm text-gray-700 font-medium">
                             {f.firstName} {f.lastName}
                           </p>
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -181,8 +176,6 @@ const UserProfilePage = () => {
           )}
         </div>
       </div>
-
-      <Footer />
     </main>
   );
 };
