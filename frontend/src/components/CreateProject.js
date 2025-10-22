@@ -25,8 +25,9 @@ const CreateProject = ({
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showImageOverlay, setShowImageOverlay] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
-  // 🔹 Initialize form with existing project data if editing
+  //  Initialize form with existing project data if editing
   useEffect(() => {
     if (initialData) {
       setProject({
@@ -38,7 +39,11 @@ const CreateProject = ({
       });
 
       if (initialData.imageUrl) {
-        setPreview(initialData.imageUrl);
+
+        const fixedUrl = initialData.imageUrl.startsWith("/uploads/")
+          ? `http://localhost:5000${initialData.imageUrl}`
+          : initialData.imageUrl;
+        setPreview(fixedUrl);
       }
 
       if (initialData.files && initialData.files.length > 0) {
@@ -56,12 +61,12 @@ const CreateProject = ({
     }
   }, [initialData]);
 
-  // 🔹 Input change handler
+  //  Input change handler
   const handleChange = (e) => {
     setProject({ ...project, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Hashtag handling
+  //  Hashtag handling
   const handleTagAdd = () => {
     const value = tagInput.trim();
     if (!value) return;
@@ -85,7 +90,7 @@ const CreateProject = ({
     }
   };
 
-  // 🔹 File handling
+  //  File handling
   const handleFileAdd = (e) => {
     const newFiles = Array.from(e.target.files).map((f) => ({
       file: f,
@@ -100,7 +105,7 @@ const CreateProject = ({
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // 🔹 Image handling
+  //  Image handling
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -144,7 +149,7 @@ const CreateProject = ({
         formData.append("image", image, image.name);
       }
 
-      // ✅ Defensive check
+      //  Defensive check
       let url, method;
       if (initialData && initialData._id) {
         url = `/api/projects/${initialData._id}`;
@@ -167,7 +172,7 @@ const CreateProject = ({
       }
 
       const response = await res.json();
-      console.log("✅ Project saved successfully:", response);
+      console.log(" Project saved successfully:", response);
 
       if (onCreate) onCreate(response);
 
@@ -282,10 +287,35 @@ const CreateProject = ({
           {/* Files */}
           <label>
             Upload Files
-            <div className="upload-box">
+            <div
+              className={`upload-box ${dragActive ? "drag-active" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+
+                const droppedFiles = Array.from(e.dataTransfer.files).map((f) => ({
+                  file: f,
+                  name: f.name,
+                  existing: false,
+                }));
+
+                setFiles((prev) => [...prev, ...droppedFiles]);
+              }}
+            >
               <span>Click to browse or drag & drop files</span>
-              <input type="file" multiple onChange={handleFileAdd} className="file-input" />
+              <input
+                type="file"
+                multiple
+                onChange={handleFileAdd}
+                className="file-input"
+              />
             </div>
+
             {files.length > 0 && (
               <div className="file-list">
                 <h4>Files:</h4>
@@ -327,7 +357,11 @@ const CreateProject = ({
             {preview && (
               <div className="image-preview">
                 <img
-                  src={preview}
+                  src={
+                    preview.startsWith("/uploads/")
+                      ? `http://localhost:5000${preview}`
+                      : preview
+                  }
                   alt="Preview"
                   className="preview-img"
                   onClick={() => setShowImageOverlay(true)}

@@ -1,0 +1,15 @@
+main:
+	g++ -g -Werror -Wall -std=c++98 main.cpp -o main
+
+clean:
+	rm -f *.o main
+
+all:
+	make clean
+	make
+	./main
+
+valgrind:
+	make clean
+	make
+	valgrind --leak-check=full ./main

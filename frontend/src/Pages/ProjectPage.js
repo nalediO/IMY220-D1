@@ -25,6 +25,16 @@ const ProjectPage = () => {
   const [newFiles, setNewFiles] = useState([]);
   const [isCheckedOut, setIsCheckedOut] = useState(false);
 
+  // New helper: Refresh project data
+  const refreshProject = async () => {
+    try {
+      const updatedProject = await projectService.getProject(projectId);
+      setProject(updatedProject);
+    } catch (err) {
+      console.error("Error refreshing project:", err);
+    }
+  };
+
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
@@ -75,7 +85,6 @@ const ProjectPage = () => {
 
       const blob = new Blob([fileContent], { type: "text/plain" });
       const formData = new FormData();
-      //  field name must match multer.single('file')
       formData.append("file", new File([blob], selectedFile.originalName));
 
       const token = localStorage.getItem("token");
@@ -91,15 +100,20 @@ const ProjectPage = () => {
       if (!res.ok) throw new Error("Failed to save file");
       alert("File updated successfully!");
 
-      const updated = await projectService.getProject(projectId);
-      setProject(updated);
+      // FIX: Refresh the project so file list updates immediately
+      await refreshProject();
+
       setIsEditingFile(false);
+      // Automatically reload edited file content
+      const updatedFile = project.files.find(
+        (f) => f.originalName === selectedFile.originalName
+      );
+      if (updatedFile) handleFileSelect(updatedFile);
     } catch (err) {
       console.error("Error saving file:", err);
       alert("Could not save file changes.");
     }
   };
-
 
   const handleDownloadFile = async (file) => {
     const token = localStorage.getItem("token");
@@ -125,7 +139,7 @@ const ProjectPage = () => {
       link.click();
       link.remove();
 
-      window.URL.revokeObjectURL(url); 
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download error:", err);
       alert("Could not download file.");
@@ -142,25 +156,20 @@ const ProjectPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (!res.ok) throw new Error("Failed to delete file");
-  
-      // update project state after deletion
-      setProject((prev) => ({
-        ...prev,
-        files: prev.files.filter((file) => file.storedName !== storedName),
-      }));
-  
+
+      // FIX: Refresh project instead of manually updating files array
+      await refreshProject();
+
       setSelectedFile(null);
       setFileContent("");
-      alert("File deleted successfully ");
+      alert("File deleted successfully");
     } catch (err) {
       console.error("Error deleting file:", err);
       alert("Could not delete file.");
     }
   };
-
-
 
   // =================== PROJECT CHECKIN ===================
   const handleFileUploadChange = (e) => {
@@ -193,34 +202,36 @@ const ProjectPage = () => {
         files: newFiles,
       });
 
+      // FIX: Immediately refresh project after upload
+      await refreshProject();
+
       setCheckins([newCheckin, ...checkins]);
       setNewCheckinMessage("");
       setNewFiles([]);
       setIsCheckedOut(false);
-
-      const updated = await projectService.getProject(projectId);
-      setProject(updated);
     } catch (error) {
       console.error("Error creating checkin:", error);
     }
   };
 
   // =================== UI RENDER ===================
-  if (loading) return (
-    <main className="project-page">
-      <Nav />
-      <div className="loading-container">Loading project...</div>
-      <Footer />
-    </main>
-  );
+  if (loading)
+    return (
+      <main className="project-page">
+        <Nav />
+        <div className="loading-container">Loading project...</div>
+        <Footer />
+      </main>
+    );
 
-  if (error || !project) return (
-    <main className="project-page">
-      <Nav />
-      <div className="error-container">{error || "Project not found."}</div>
-      <Footer />
-    </main>
-  );
+  if (error || !project)
+    return (
+      <main className="project-page">
+        <Nav />
+        <div className="error-container">{error || "Project not found."}</div>
+        <Footer />
+      </main>
+    );
 
   return (
     <main className="project-page">
@@ -241,10 +252,7 @@ const ProjectPage = () => {
         <div className="project-body">
           <div className="files-section">
             <h3>Project Files</h3>
-            <FilesList
-              files={project.files || []}
-              onSelect={handleFileSelect}
-            />
+            <FilesList files={project.files || []} onSelect={handleFileSelect} />
           </div>
 
           <div className="content-section">
@@ -266,12 +274,20 @@ const ProjectPage = () => {
                 ) : (
                   <>
                     <pre className="file-content">{fileContent}</pre>
-                    <button onClick={() => setIsEditingFile(true)}>Edit File</button>
-                    <button onClick={() => handleDeleteFile(selectedFile.storedName)}>Delete File</button>
-                    <button onClick={() => handleDownloadFile(selectedFile)} className="download-btn1">
+                    <button onClick={() => setIsEditingFile(true)}>
+                      Edit File
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFile(selectedFile.storedName)}
+                    >
+                      Delete File
+                    </button>
+                    <button
+                      onClick={() => handleDownloadFile(selectedFile)}
+                      className="download-btn1"
+                    >
                       Download
                     </button>
-
                   </>
                 )}
               </div>
@@ -305,9 +321,13 @@ const ProjectPage = () => {
                   checkins.map((checkin) => (
                     <div key={checkin._id} className="checkin-item">
                       <div className="checkin-header">
-                        <span className="user">{checkin.user?.username || "Unknown"}</span>
+                        <span className="user">
+                          {checkin.user?.username || "Unknown"}
+                        </span>
                         <span className="version">v{checkin.version}</span>
-                        <span className="date">{new Date(checkin.createdAt).toLocaleDateString()}</span>
+                        <span className="date">
+                          {new Date(checkin.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                       <p className="checkin-message">{checkin.message}</p>
                       {checkin.files && checkin.files.length > 0 && (
@@ -322,7 +342,6 @@ const ProjectPage = () => {
                               {file.originalName}
                             </button>
                           ))}
-
                         </div>
                       )}
                     </div>
@@ -341,7 +360,10 @@ const ProjectPage = () => {
           <div className="modal-content">
             <EditProject
               project={project}
-              onSave={() => setIsEditing(false)}
+              onSave={() => {
+                setIsEditing(false);
+                refreshProject(); // FIX: Update immediately after edit
+              }}
               onCancel={() => setIsEditing(false)}
             />
           </div>
