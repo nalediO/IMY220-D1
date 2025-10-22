@@ -6,7 +6,7 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const CreateProject = ({
   onCancel,
-  onCreate,         // callback after create or edit success
+  onCreate, // callback after create or edit success
   owner,
   initialData = null,
   isInline = false,
@@ -27,7 +27,7 @@ const CreateProject = ({
   const [showImageOverlay, setShowImageOverlay] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
-  //  Initialize form with existing project data if editing
+  // Initialize form with existing data (for editing)
   useEffect(() => {
     if (initialData) {
       setProject({
@@ -39,7 +39,6 @@ const CreateProject = ({
       });
 
       if (initialData.imageUrl) {
-
         const fixedUrl = initialData.imageUrl.startsWith("/uploads/")
           ? `http://localhost:5000${initialData.imageUrl}`
           : initialData.imageUrl;
@@ -61,12 +60,9 @@ const CreateProject = ({
     }
   }, [initialData]);
 
-  //  Input change handler
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setProject({ ...project, [e.target.name]: e.target.value });
-  };
 
-  //  Hashtag handling
   const handleTagAdd = () => {
     const value = tagInput.trim();
     if (!value) return;
@@ -90,7 +86,7 @@ const CreateProject = ({
     }
   };
 
-  //  File handling
+  // File handling
   const handleFileAdd = (e) => {
     const newFiles = Array.from(e.target.files).map((f) => ({
       file: f,
@@ -101,16 +97,15 @@ const CreateProject = ({
     e.target.value = null;
   };
 
-  const handleRemoveFile = (index) => {
+  const handleRemoveFile = (index) =>
     setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
 
-  //  Image handling
+  // Image handling
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > MAX_IMAGE_SIZE) {
-      alert("Image exceeds 5MB");
+      alert("Image exceeds 5MB limit");
       return;
     }
     setImage(file);
@@ -118,7 +113,6 @@ const CreateProject = ({
     e.target.value = null;
   };
 
-  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -129,16 +123,17 @@ const CreateProject = ({
 
       if (initialData && initialData._id) {
         projectData._id = initialData._id;
-        const existingFiles = files.filter(f => f.existing).map(f => ({
-          originalName: f.name,
-          storedName: f.storedName,
-          fileUrl: f.fileUrl,
-        }));
+        const existingFiles = files
+          .filter((f) => f.existing)
+          .map((f) => ({
+            originalName: f.name,
+            storedName: f.storedName,
+            fileUrl: f.fileUrl,
+          }));
         projectData.existingFiles = existingFiles;
       }
 
       formData.append("project", JSON.stringify(projectData));
-
       files.forEach((fObj) => {
         if (!fObj.existing && fObj.file) {
           formData.append("files", fObj.file, fObj.name);
@@ -149,14 +144,11 @@ const CreateProject = ({
         formData.append("image", image, image.name);
       }
 
-      //  Defensive check
-      let url, method;
+      let url = "/api/projects";
+      let method = "POST";
       if (initialData && initialData._id) {
         url = `/api/projects/${initialData._id}`;
         method = "PUT";
-      } else {
-        url = "/api/projects";
-        method = "POST";
       }
 
       const token = localStorage.getItem("token");
@@ -176,8 +168,15 @@ const CreateProject = ({
 
       if (onCreate) onCreate(response);
 
+      // Reset form only if creating (not editing)
       if (!isInline && !initialData) {
-        setProject({ name: "", projectType: "", description: "", currentVersion: "1.0.0", hashtags: [] });
+        setProject({
+          name: "",
+          projectType: "",
+          description: "",
+          currentVersion: "1.0.0",
+          hashtags: [],
+        });
         setFiles([]);
         setImage(null);
         setPreview(null);
@@ -190,7 +189,6 @@ const CreateProject = ({
       setSaving(false);
     }
   };
-
 
   return (
     <div className={`create-project ${isInline ? "inline" : "standalone"}`}>
@@ -284,7 +282,7 @@ const CreateProject = ({
             </div>
           </label>
 
-          {/* Files */}
+          {/* FILE UPLOAD */}
           <label>
             Upload Files
             <div
@@ -297,23 +295,16 @@ const CreateProject = ({
               onDrop={(e) => {
                 e.preventDefault();
                 setDragActive(false);
-
                 const droppedFiles = Array.from(e.dataTransfer.files).map((f) => ({
                   file: f,
                   name: f.name,
                   existing: false,
                 }));
-
                 setFiles((prev) => [...prev, ...droppedFiles]);
               }}
             >
               <span>Click to browse or drag & drop files</span>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileAdd}
-                className="file-input"
-              />
+              <input type="file" multiple onChange={handleFileAdd} className="file-input" />
             </div>
 
             {files.length > 0 && (
@@ -346,13 +337,18 @@ const CreateProject = ({
           </label>
         </div>
 
-        {/* IMAGE */}
+        {/* IMAGE UPLOAD */}
         <div className="upload-section">
           <label>
             Project Image
             <div className="upload-box">
               <span>Click to browse or drag & drop an image</span>
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="file-input" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="file-input"
+              />
             </div>
             {preview && (
               <div className="image-preview">

@@ -20,7 +20,7 @@
 }
 
 .users-page h2 {
-  color: #f9fafb;
+  color: #ffffff;
   font-size: 1.75rem;
   font-weight: 700;
   margin: 2rem 0 1.5rem 0;
@@ -106,7 +106,7 @@
 }
 
 .user-info p {
-  color: #9ca3af;
+  color: #e6e6e6;
   font-size: 0.85rem;
   margin: 0;
   white-space: nowrap;

@@ -118,19 +118,15 @@ const UserProfilePage = () => {
 
               {/* Projects */}
               <div style={{ marginTop: '1.5rem' }}>
-                <h3 className="profile-section-title">
-                  Projects
-                </h3>
+                <h3 className="profile-section-title">Projects</h3>
                 {user.projects?.length ? (
                   <ul className="projects-grid">
-                    {user.projects.map((p) => (
+                    {user.projects.map((p, index) => (
                       <li
-                        key={p._id}
+                        key={p._id || p.id || `project-${index}`}
                         className="project-card"
                       >
-                        <h4 className="project-title">
-                          {p.title}
-                        </h4>
+                        <h4 className="project-title">{p.title}</h4>
                         <p className="project-description">
                           {p.description || "No description provided."}
                         </p>
@@ -144,19 +140,21 @@ const UserProfilePage = () => {
 
               {/* Friends */}
               <div style={{ marginTop: '1.5rem' }}>
-                <h3 className="profile-section-title">
-                  Friends
-                </h3>
+                <h3 className="profile-section-title">Friends</h3>
                 {user.friends?.length ? (
                   <ul className="friends-grid">
-                    {user.friends.map((f) => (
+                    {user.friends.map((f, index) => (
                       <li
-                        key={f._id}
+                        key={f._id || f.id || `friend-${index}`}
                         className="friend-card"
                       >
-                        <a href={`/profile/${f._id}`}>
+                        <a href={`/profile/${f._id || f.id}`}>
                           <img
-                            src={f.profileImage ? `http://localhost:5000/${f.profileImage.replace(/^\/?uploads\//, 'uploads/')}` : "/assets/profile.png"}
+                            src={
+                              f.profileImage
+                                ? `http://localhost:5000/${f.profileImage.replace(/^\/?uploads\//, 'uploads/')}`
+                                : "/assets/profile.png"
+                            }
                             alt={f.username}
                             className="friend-image"
                           />

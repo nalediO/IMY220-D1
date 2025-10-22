@@ -64,7 +64,7 @@
   }
   
   .profile-username {
-    color: #6b7280;
+    color: #c3c4c5;
   }
   
   /* Friend Status */
@@ -88,7 +88,7 @@
   
   .not-friends-text {
     font-size: 0.875rem;
-    color: #9ca3af;
+    color: #ebebeb;
     font-style: italic;
   }
   
@@ -113,7 +113,7 @@
   
   /* Profile Info */
   .profile-info {
-    color: #4b5563;
+    color: #d1d1d1;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -121,7 +121,7 @@
   
   .info-label {
     font-weight: 500;
-    color: #1f2937;
+    color: #646464;
   }
   
   /* Projects Section */
@@ -154,7 +154,7 @@
   
   .project-title {
     font-weight: 600;
-    color: #1f2937;
+    color: #404142;
     margin-bottom: 0.25rem;
   }
   

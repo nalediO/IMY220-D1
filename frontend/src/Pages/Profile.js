@@ -6,7 +6,7 @@ import EditProfile from "../components/EditProfile";
 import ProjectList from "../components/ProjectList";
 import FriendsList from "../components/FriendsList";
 import CreateProject from "../components/CreateProject";
-import EditProject from "../components/EditProject"; 
+import EditProject from "../components/EditProject";
 import PendingRequests from "../components/PendingRequest";
 import { userService, projectService, friendService } from "../services/api";
 import "../css/Profile.css";
@@ -17,7 +17,7 @@ const Profile = () => {
   const [friends, setFriends] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
-  const [editingProject, setEditingProject] = useState(null); 
+  const [editingProject, setEditingProject] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ const Profile = () => {
         prev.map((p) => (p._id === updated._id ? updated : p))
       );
 
-      setEditingProject(null); // close editor
+      setEditingProject(null);
     } catch (error) {
       console.error("Failed to update project:", error);
       alert("Failed to update project: " + (error.message || "Unknown error"));
@@ -187,7 +187,7 @@ const Profile = () => {
                 </div>
                 <ProjectList
                   projects={userProjects}
-                  onUpdate={(p) => setEditingProject(p)} 
+                  onUpdate={(p) => setEditingProject(p)}
                   onDelete={handleProjectDelete}
                 />
               </div>
