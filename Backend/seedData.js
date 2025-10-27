@@ -16,14 +16,14 @@ async function seedDatabase() {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    console.log('✅ Connected to database');
+    console.log(' Connected to database');
 
     // Clear existing data
     await User.deleteMany({});
     await Project.deleteMany({});
     await Checkin.deleteMany({});
     await FriendRequest.deleteMany({});
-    console.log('✅ Cleared old data');
+    console.log(' Cleared old data');
 
     // ================= USERS =================
     const users = [
@@ -65,7 +65,7 @@ async function seedDatabase() {
       }
     ];
     const createdUsers = await User.insertMany(users);
-    console.log(`✅ Created ${createdUsers.length} users`);
+    console.log(` Created ${createdUsers.length} users`);
 
     // Add mutual friends
     createdUsers[0].friends.push(createdUsers[1]._id); // Alice -> Bob

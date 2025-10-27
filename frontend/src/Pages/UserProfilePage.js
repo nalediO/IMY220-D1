@@ -10,6 +10,7 @@ const UserProfilePage = () => {
   const [user, setUser] = useState(null);
   const [isFriend, setIsFriend] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [friendsOfFriend, setFriendsOfFriend] = useState([]);
   const navigate = useNavigate();
 
   const fetchProfile = async () => {
@@ -18,10 +19,44 @@ const UserProfilePage = () => {
       const userData = await userService.getUserById(userId);
       setUser(userData);
 
-      // Check friendship
+
       const friends = await friendService.getFriends();
       const isUserFriend = friends.some((f) => f._id === userId);
       setIsFriend(isUserFriend);
+
+      if (isUserFriend && userData.friends?.length) {
+        const friendDetails = await Promise.all(
+          userData.friends.map(async (fid) => {
+            try {
+              return await userService.getUserById(fid);
+            } catch {
+              return null; 
+            }
+          })
+        );
+
+        const validFriends = friendDetails.filter(Boolean);
+        setUser((prev) => ({ ...prev, friends: validFriends }));
+
+        const fofIds = [
+          ...new Set(
+            validFriends.flatMap((f) => f.friends || [])
+          ),
+        ].filter((fid) => fid !== userId); 
+
+        const fofDetails = await Promise.all(
+          fofIds.map(async (fid) => {
+            try {
+              return await userService.getUserById(fid);
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        setFriendsOfFriend(fofDetails.filter(Boolean));
+      }
+
     } catch (err) {
       console.error("Error fetching profile:", err);
       alert("Failed to load profile");
