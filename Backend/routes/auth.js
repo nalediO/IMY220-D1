@@ -3,16 +3,18 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const router = express.Router();
 
+// REGISTER
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password, firstName, lastName } = req.body;
+    const { username, email, password, firstName, lastName, role } = req.body;
     
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = new User({ username, email, password, firstName, lastName });
+    // Default role is "user" if not provided
+    const user = new User({ username, email, password, firstName, lastName, role: role || 'user' });
     await user.save();
 
     const token = jwt.sign(
@@ -28,7 +30,10 @@ router.post('/register', async (req, res) => {
         username: user.username,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        profileImage: user.profileImage,
+        role: user.role,
+        isVerified: user.isVerified
       }
     });
   } catch (error) {
@@ -36,6 +41,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -59,7 +65,9 @@ router.post('/login', async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        profileImage: user.profileImage
+        profileImage: user.profileImage,
+        role: user.role,
+        isVerified: user.isVerified
       }
     });
   } catch (error) {
