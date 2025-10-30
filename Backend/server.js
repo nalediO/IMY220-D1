@@ -11,6 +11,8 @@ const userRoutes = require('./routes/users');
 const projectRoutes = require('./routes/Projects');
 const checkinRoutes = require('./routes/checkins');
 const friendRoutes = require('./routes/friends');
+const projectTypesRouter = require("./routes/projectTypes");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +31,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/checkins', checkinRoutes);
 app.use('/api/friends', friendRoutes);
+app.use("/api/project-types", projectTypesRouter);
+app.use("/api/admin", adminRoutes);
+
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

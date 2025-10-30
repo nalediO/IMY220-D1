@@ -12,6 +12,7 @@ const Nav = () => {
         <Link to="/project">Projects</Link>
         <Link to="/UserPage">User</Link> 
         <Link to="/">Logout</Link>
+        
       </div>
     </nav>
   );

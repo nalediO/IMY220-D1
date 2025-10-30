@@ -380,5 +380,43 @@ router.get('/:id/files/:storedName/download', auth, async (req, res) => {
   }
 });
 
+// ----------------- ADD MEMBER TO PROJECT -----------------
+router.post('/:id/members', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) return res.status(400).json({ message: 'User ID is required' });
+
+    const project = await Project.findById(id);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    // Only the project owner can invite members
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Prevent duplicates
+    if (project.members.includes(userId)) {
+      return res.status(400).json({ message: 'User is already a member' });
+    }
+
+    project.members.push(userId);
+    await project.save();
+
+    // Populate user data for response
+    await project.populate('members', 'username firstName lastName profileImage');
+
+    res.status(200).json({
+      message: 'Member added successfully',
+      project,
+    });
+  } catch (err) {
+    console.error('Add member error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+
 
 module.exports = router;

@@ -17,6 +17,7 @@ const SplashPage = () => {
           <Link to="/signin" className="signup-btn">
             Sign Up
           </Link>
+          <Link to="/admin-login">Admin</Link> 
         </nav>
       </header>
 

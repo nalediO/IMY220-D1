@@ -233,6 +233,11 @@ export const projectService = {
 
   getProject: (projectId) => apiRequest(`/projects/${projectId}`),
 
+  getProjectTypes: async () => {
+    // Assumes you have a backend route at /api/project-types
+    return apiRequest("/project-types");
+  },
+
   createProject: async (projectData) => {
     const token = localStorage.getItem('token');
     const formData = new FormData();
@@ -284,6 +289,25 @@ export const projectService = {
     return res.json();
   },
 
+  addMember: async (projectId, userId) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to add member");
+    }
+
+    return res.json();
+  },
+
   updateProject: async (project, token) => {
     //  Validate input
     const projectId = project._id || project.id;
@@ -319,6 +343,8 @@ export const projectService = {
         },
       }
     );
+
+
 
     return res.data;
   },
@@ -377,4 +403,14 @@ export const checkinService = {
 
     return res.json();
   },
+};
+
+export const adminService = {
+  getProjects: async () => request("/admin/projects"),
+  editProject: async (id, data) => request(`/admin/projects/${id}`, "PUT", data),
+  deleteProject: async (id) => request(`/admin/projects/${id}`, "DELETE"),
+  getUsers: async () => request("/admin/users"),
+  editUser: async (id, data) => request(`/admin/users/${id}`, "PUT", data),
+  deleteUser: async (id) => request(`/admin/users/${id}`, "DELETE"),
+  verifyUser: async (id) => request(`/admin/users/${id}/verify`, "PUT"),
 };

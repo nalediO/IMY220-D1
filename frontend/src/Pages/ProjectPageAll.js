@@ -45,8 +45,7 @@ const ProjectsPageAll = () => {
   };
 
 const handleUpdate = async (formData, projectId) => {
-  const userToken = localStorage.getItem("token"); // 🟢 Retrieve your token here
-
+  const userToken = localStorage.getItem("token"); 
   if (!userToken) {
     console.error("User token is missing");
     alert("You are not logged in.");
@@ -60,7 +59,7 @@ const handleUpdate = async (formData, projectId) => {
   }
 
   try {
-    // Build project object
+
     const project = { _id: projectId };
 
     if (formData instanceof FormData) {
@@ -71,7 +70,7 @@ const handleUpdate = async (formData, projectId) => {
       Object.assign(project, projectData);
     }
 
-    // ✅ Pass token here
+    // Pass token here
     await projectService.updateProject(project, userToken);
 
     // Refresh projects

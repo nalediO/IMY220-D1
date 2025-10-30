@@ -12,6 +12,8 @@ import ProjectsPageAll from "./src/Pages/ProjectPageAll";
 import UserPage from "./src/Pages/UserPage"; 
 import UserProfilePage from "./src/Pages/UserProfilePage"
 
+import AdminLogin from "./src/Pages/AdminLogin";
+
 import { AuthProvider } from "./src/contexts/AuthContext";
 
 const App = () => {
@@ -28,6 +30,8 @@ const App = () => {
           <Route path="/Profile" element={<Profile />} />
           <Route path="/UserPage" element={<UserPage />} />
           <Route path="/profile/:userId" element={<UserProfilePage />} />
+
+          <Route path="/admin-login" element={<AdminLogin />} />
 
           {/* Projects pages */}
           <Route path="/ProjectsCPage" element={<ProjectsCPage />} />

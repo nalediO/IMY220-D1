@@ -4,21 +4,24 @@ const mongoose = require('mongoose');
 const migrateUsers = async () => {
   try {
     // Connect to your MongoDB
-    await mongoose.connect('mongodb+srv://test-user:test-password@cluster0.doal6nz.mongodb.net/Version_Control?retryWrites=true&w=majority', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(
+      'mongodb+srv://test-user:test-password@cluster0.doal6nz.mongodb.net/Version_Control?retryWrites=true&w=majority',
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }
+    );
 
-    console.log('Connected to MongoDB');
+    console.log('✅ Connected to MongoDB');
 
-    // Get the users collection directly
+    // Access the users collection
     const db = mongoose.connection.db;
     const usersCollection = db.collection('users');
 
-    // Find all users that need migration
+    // Fetch all users
     const users = await usersCollection.find({}).toArray();
-    
-    console.log(`Found ${users.length} users to check for migration`);
+
+    console.log(`Found ${users.length} users to migrate.`);
 
     let migratedCount = 0;
     let skippedCount = 0;
@@ -27,7 +30,18 @@ const migrateUsers = async () => {
       const updateFields = {};
       let needsUpdate = false;
 
-      // Check and set default values for new fields
+      // 🔹 Ensure new fields for admin/verification
+      if (!user.role) {
+        updateFields.role = 'user'; // default non-admin
+        needsUpdate = true;
+      }
+
+      if (user.isVerified === undefined) {
+        updateFields.isVerified = false;
+        needsUpdate = true;
+      }
+
+      // 🔹 Keep your previous fields
       if (!user.programmingLanguages) {
         updateFields.programmingLanguages = [];
         needsUpdate = true;
@@ -63,33 +77,31 @@ const migrateUsers = async () => {
         needsUpdate = true;
       }
 
-      // Update the document if needed
       if (needsUpdate) {
         await usersCollection.updateOne(
           { _id: user._id },
           { $set: updateFields }
         );
-
+        console.log(`🛠️ Migrated user: ${user.username}`);
         migratedCount++;
-        console.log(`Migrated user: ${user.username}`);
       } else {
+        console.log(`⏭️  User ${user.username} already up to date.`);
         skippedCount++;
-        console.log(`User ${user.username} already up to date`);
       }
     }
 
-    console.log(`\nMigration Summary:`);
-    console.log(`✅ Successfully migrated: ${migratedCount} users`);
-    console.log(`⏭️  Already up to date: ${skippedCount} users`);
-    console.log(`📊 Total processed: ${users.length} users`);
+    console.log(`\n📊 Migration Summary`);
+    console.log(`✅ Updated: ${migratedCount}`);
+    console.log(`⏭️  Skipped: ${skippedCount}`);
+    console.log(`👥 Total processed: ${users.length}`);
 
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('❌ Migration failed:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    console.log('🔌 Disconnected from MongoDB');
   }
 };
 
-// Run the migration
+// Run it
 migrateUsers();

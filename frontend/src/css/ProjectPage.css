@@ -472,3 +472,202 @@
     margin-bottom: 0.5rem;
   }
 }
+
+/* Invite Friends Section */
+.invite-section {
+  background: #1f2937;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1rem;
+}
+
+.invite-section h3 {
+  color: #f9fafb;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #374151;
+}
+
+.invite-section select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.invite-section select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.invite-section select option {
+  background: #374151;
+  color: #e5e7eb;
+  padding: 0.5rem;
+}
+
+.invite-section button {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.invite-section button:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+}
+
+.invite-section button:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Check-in Input Section */
+.checkin-input {
+  background: #374151;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.checkin-input textarea {
+  width: 100%;
+  padding: 1rem;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  resize: vertical;
+  margin-bottom: 1rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+  min-height: 80px;
+}
+
+.checkin-input textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.checkin-input textarea::placeholder {
+  color: #9ca3af;
+}
+
+.checkin-input input[type="text"] {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.checkin-input input[type="text"]:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.checkin-input input[type="text"]::placeholder {
+  color: #9ca3af;
+}
+
+.checkin-input input[type="file"] {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #e5e7eb;
+  padding: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.checkin-input input[type="file"]::file-selector-button {
+  background: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.checkin-input input[type="file"]::file-selector-button:hover {
+  background: #4b5563;
+}
+
+.checkin-input button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.checkin-input button:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.checkin-input button:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive design for invite and checkin sections */
+@media (max-width: 768px) {
+  .invite-section,
+  .checkin-input {
+    padding: 1rem;
+  }
+  
+  .invite-section select,
+  .invite-section button,
+  .checkin-input textarea,
+  .checkin-input input[type="text"],
+  .checkin-input input[type="file"],
+  .checkin-input button {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .invite-section h3,
+  .checkins-section h3 {
+    font-size: 1.1rem;
+  }
+  
+  .checkin-input {
+    margin-bottom: 1rem;
+  }
+}

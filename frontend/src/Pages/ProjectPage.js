@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { projectService, checkinService } from "../services/api";
+import {
+  projectService,
+  checkinService,
+  userService,
+  friendService,
+} from "../services/api";
 import FilesList from "../components/FilesList";
 import EditProject from "../components/EditProject";
 import Nav from "../components/Nav";
@@ -14,6 +19,7 @@ const ProjectPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [isCheckedOut, setIsCheckedOut] = useState(false);
 
   // File states
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,43 +29,72 @@ const ProjectPage = () => {
   // Check-in states
   const [newCheckinMessage, setNewCheckinMessage] = useState("");
   const [newFiles, setNewFiles] = useState([]);
-  const [isCheckedOut, setIsCheckedOut] = useState(false);
+  const [newVersion, setNewVersion] = useState(project?.currentVersion || "");
 
-  // New helper: Refresh project data
+  // Invite friends
+  const [friends, setFriends] = useState([]);
+  const [selectedFriendId, setSelectedFriendId] = useState("");
+
+  // Project types
+  const [projectTypes, setProjectTypes] = useState([]);
+  const [selectedType, setSelectedType] = useState("");
+
+  // Helper: Refresh project data
   const refreshProject = async () => {
     try {
       const updatedProject = await projectService.getProject(projectId);
       setProject(updatedProject);
+      setIsCheckedOut(updatedProject.isCheckedOut);
+      setSelectedType(updatedProject.projectType || "");
+      setNewVersion(updatedProject.currentVersion || "1.0.0");
     } catch (err) {
       console.error("Error refreshing project:", err);
     }
   };
 
+  // Fetch initial data
   useEffect(() => {
-    const fetchProjectData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError("");
 
+        // Fetch project details
         const projectData = await projectService.getProject(projectId);
-        if (!projectData || !projectData._id) {
-          setError("Project not found.");
+        if (!projectData) {
+          setError("Project not found");
           return;
         }
         setProject(projectData);
         setIsCheckedOut(projectData.isCheckedOut);
+        setSelectedType(projectData.projectType || "");
+        setNewVersion(projectData.currentVersion || "1.0.0");
 
+        // Fetch project check-ins
         const checkinsData = await checkinService.getProjectCheckins(projectId);
         setCheckins(checkinsData || []);
+
+        // Fetch friends
+        const allFriends = await friendService.getFriends();
+        setFriends(allFriends);
+
+        // Fetch predefined project types
+        try {
+          const types = await projectService.getProjectTypes();
+          setProjectTypes(types);
+        } catch (err) {
+          console.error("Failed to load project types:", err);
+        }
+
       } catch (err) {
-        console.error("Error fetching project data:", err);
-        setError("Failed to load project.");
+        console.error(err);
+        setError("Failed to load project data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProjectData();
+    fetchData();
   }, [projectId]);
 
   // =================== FILE HANDLING ===================
@@ -99,12 +134,8 @@ const ProjectPage = () => {
 
       if (!res.ok) throw new Error("Failed to save file");
       alert("File updated successfully!");
-
-      // FIX: Refresh the project so file list updates immediately
       await refreshProject();
-
       setIsEditingFile(false);
-      // Automatically reload edited file content
       const updatedFile = project.files.find(
         (f) => f.originalName === selectedFile.originalName
       );
@@ -117,31 +148,23 @@ const ProjectPage = () => {
 
   const handleDownloadFile = async (file) => {
     const token = localStorage.getItem("token");
-
     try {
       const res = await fetch(
         `http://localhost:5000/api/projects/${projectId}/files/${file.storedName}/download`,
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (!res.ok) throw new Error("Failed to download file");
-
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", file.originalName);
       document.body.appendChild(link);
       link.click();
       link.remove();
-
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Download error:", err);
+      console.error(err);
       alert("Could not download file.");
     }
   };
@@ -151,27 +174,20 @@ const ProjectPage = () => {
       const token = localStorage.getItem("token");
       const res = await fetch(
         `http://localhost:5000/api/projects/${projectId}/files/${storedName}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (!res.ok) throw new Error("Failed to delete file");
-
-      // FIX: Refresh project instead of manually updating files array
       await refreshProject();
-
       setSelectedFile(null);
       setFileContent("");
       alert("File deleted successfully");
     } catch (err) {
-      console.error("Error deleting file:", err);
+      console.error(err);
       alert("Could not delete file.");
     }
   };
 
-  // =================== PROJECT CHECKIN ===================
+  // =================== CHECK-OUT / CHECK-IN ===================
   const handleFileUploadChange = (e) => {
     setNewFiles(Array.from(e.target.files));
   };
@@ -179,14 +195,14 @@ const ProjectPage = () => {
   const handleCheckOut = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(
-        `http://localhost:5000/api/projects/${projectId}/checkout`,
-        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await fetch(`http://localhost:5000/api/projects/${projectId}/checkout`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error("Failed to check out project");
       setIsCheckedOut(true);
-    } catch (error) {
-      console.error("Checkout failed:", error);
+    } catch (err) {
+      console.error(err);
       alert("Could not check out project.");
     }
   };
@@ -195,26 +211,38 @@ const ProjectPage = () => {
     if (!newCheckinMessage.trim() && newFiles.length === 0) return;
 
     try {
-      const newCheckin = await checkinService.createCheckin({
+      await checkinService.createCheckin({
         projectId,
         message: newCheckinMessage,
-        version: project.currentVersion || "1.0.0",
+        version: newVersion || project.currentVersion,
         files: newFiles,
       });
-
-      // FIX: Immediately refresh project after upload
       await refreshProject();
-
-      setCheckins([newCheckin, ...checkins]);
+      setCheckins(await checkinService.getProjectCheckins(projectId));
       setNewCheckinMessage("");
       setNewFiles([]);
       setIsCheckedOut(false);
-    } catch (error) {
-      console.error("Error creating checkin:", error);
+    } catch (err) {
+      console.error(err);
+      alert("Check-in failed");
     }
   };
 
-  // =================== UI RENDER ===================
+  // =================== INVITE FRIEND ===================
+  const handleInviteFriend = async () => {
+    if (!selectedFriendId) return;
+    try {
+      await projectService.addMember(projectId, selectedFriendId);
+      alert("Friend invited successfully!");
+      setSelectedFriendId("");
+      await refreshProject();
+    } catch (err) {
+      console.error(err);
+      alert("Could not invite friend");
+    }
+  };
+
+  // =================== RENDER ===================
   if (loading)
     return (
       <main className="project-page">
@@ -241,32 +269,40 @@ const ProjectPage = () => {
           <h1>{project.name}</h1>
           <p>{project.description}</p>
           <div className="project-meta">
-            <span>Version: {project.currentVersion || "1.0.0"}</span>
-            <span>Type: {project.projectType || "Desktop"}</span>
-            <button onClick={() => setIsEditing(true)} className="edit-btn">
+            <span>Version: {project.currentVersion}</span>
+            <span>Type: {project.projectType}</span>
+            <span>
+              Hashtags:{" "}
+              {project.hashtags?.map((h, idx) => (
+                <strong key={idx}>#{h} </strong>
+              ))}
+            </span>
+            <button className="edit-btn" onClick={() => setIsEditing(true)}>
               Edit Project
             </button>
           </div>
         </div>
 
         <div className="project-body">
+          {/* Files Section */}
           <div className="files-section">
             <h3>Project Files</h3>
             <FilesList files={project.files || []} onSelect={handleFileSelect} />
           </div>
 
+          {/* Content Section */}
           <div className="content-section">
+            {/* File Preview */}
             {selectedFile ? (
               <div className="file-preview">
                 <h4>{selectedFile.originalName}</h4>
-
                 {isEditingFile ? (
                   <>
                     <textarea
+                      className="file-textarea"
                       value={fileContent}
                       onChange={(e) => setFileContent(e.target.value)}
                       rows={15}
-                      className="file-textarea"
                     />
                     <button onClick={handleSaveFile}>Save Changes</button>
                     <button onClick={() => setIsEditingFile(false)}>Cancel</button>
@@ -274,20 +310,20 @@ const ProjectPage = () => {
                 ) : (
                   <>
                     <pre className="file-content">{fileContent}</pre>
-                    <button onClick={() => setIsEditingFile(true)}>
-                      Edit File
+                    <button onClick={() => setIsEditingFile(true)}>Edit</button>
+                    <button onClick={() => handleDeleteFile(selectedFile.storedName)}>
+                      Delete
                     </button>
-                    <button
-                      onClick={() => handleDeleteFile(selectedFile.storedName)}
-                    >
-                      Delete File
-                    </button>
-                    <button
-                      onClick={() => handleDownloadFile(selectedFile)}
+                    <a 
                       className="download-btn1"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDownloadFile(selectedFile);
+                      }}
+                      href="#"
                     >
                       Download
-                    </button>
+                    </a>
                   </>
                 )}
               </div>
@@ -297,8 +333,27 @@ const ProjectPage = () => {
               </div>
             )}
 
+            {/* Invite Friends Section */}
+            <div className="invite-section">
+              <h3>Invite Friends</h3>
+              <select
+                value={selectedFriendId}
+                onChange={(e) => setSelectedFriendId(e.target.value)}
+              >
+                <option value="">Select a friend</option>
+                {friends.map((f) => (
+                  <option key={f._id} value={f._id}>
+                    {f.username}
+                  </option>
+                ))}
+              </select>
+              <button onClick={handleInviteFriend}>Invite</button>
+            </div>
+
+            {/* Check-ins Section */}
             <div className="checkins-section">
-              <h3>Project Activity & Messages</h3>
+              <h3>Project Activity & Check-ins</h3>
+              
               {!isCheckedOut ? (
                 <button className="checkout-btn" onClick={handleCheckOut}>
                   Check Out Project
@@ -308,8 +363,14 @@ const ProjectPage = () => {
                   <textarea
                     value={newCheckinMessage}
                     onChange={(e) => setNewCheckinMessage(e.target.value)}
-                    placeholder="What did you work on? Add a message..."
+                    placeholder="Check-in message..."
                     rows={3}
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Version" 
+                    value={newVersion} 
+                    onChange={(e) => setNewVersion(e.target.value)} 
                   />
                   <input type="file" multiple onChange={handleFileUploadChange} />
                   <button onClick={handleCreateCheckin}>Check In</button>
@@ -318,36 +379,38 @@ const ProjectPage = () => {
 
               <div className="checkins-list">
                 {checkins.length > 0 ? (
-                  checkins.map((checkin) => (
-                    <div key={checkin._id} className="checkin-item">
+                  checkins.map((c) => (
+                    <div key={c._id} className="checkin-item">
                       <div className="checkin-header">
-                        <span className="user">
-                          {checkin.user?.username || "Unknown"}
-                        </span>
-                        <span className="version">v{checkin.version}</span>
+                        <span className="user">{c.user?.username}</span>
+                        <span className="version">v{c.version}</span>
                         <span className="date">
-                          {new Date(checkin.createdAt).toLocaleDateString()}
+                          {new Date(c.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="checkin-message">{checkin.message}</p>
-                      {checkin.files && checkin.files.length > 0 && (
+                      <p className="checkin-message">{c.message}</p>
+                      {c.files?.length > 0 && (
                         <div className="checkin-files">
-                          <strong>Files updated:</strong>
-                          {checkin.files.map((file, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleDownloadFile(file)}
+                          <strong>Files:</strong>
+                          {c.files.map((f, idx) => (
+                            <a
+                              key={idx}
                               className="file-tag"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleDownloadFile(f);
+                              }}
+                              href="#"
                             >
-                              {file.originalName}
-                            </button>
+                              {f.filename}
+                            </a>
                           ))}
                         </div>
                       )}
                     </div>
                   ))
                 ) : (
-                  <p>No activity yet. Be the first to check in!</p>
+                  <p>No activity yet.</p>
                 )}
               </div>
             </div>
@@ -360,9 +423,10 @@ const ProjectPage = () => {
           <div className="modal-content">
             <EditProject
               project={project}
+              projectTypes={projectTypes}
               onSave={() => {
                 setIsEditing(false);
-                refreshProject(); // FIX: Update immediately after edit
+                refreshProject();
               }}
               onCancel={() => setIsEditing(false)}
             />

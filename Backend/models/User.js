@@ -11,7 +11,18 @@ const userSchema = new mongoose.Schema({
   bio: String,
   programmingLanguages: [String],
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+
+  role: { 
+    type: String, 
+    enum: ['user', 'admin'], 
+    default: 'user' 
+  },
+
+  isVerified: { 
+    type: Boolean, 
+    default: false 
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -12,7 +12,6 @@ const ProjectsCPage = () => {
   const handleProjectCreate = (newProject) => {
     console.log("Project created:", newProject);
     alert("Project created successfully!");
-    // navigate to project list or project page if desired
   };
 
   return (
