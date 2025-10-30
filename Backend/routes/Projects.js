@@ -33,7 +33,7 @@ router.post('/', auth, projectUpload, async (req, res) => {
   try {
     console.log('Request body:', req.body);
     console.log('Files received:', req.files);
-    
+
     // Safely parse the project data
     let data;
     try {
@@ -42,27 +42,27 @@ router.post('/', auth, projectUpload, async (req, res) => {
       console.error('JSON parse error:', parseError);
       return res.status(400).json({ message: 'Invalid project data format', error: parseError.message });
     }
-    
+
     // Create project with safe file handling
     const project = new Project({
       ...data,
       owner: req.user._id,
       members: [req.user._id],
       // Safely handle files
-      files: req.files && req.files['files'] 
+      files: req.files && req.files['files']
         ? req.files['files'].map((f) => ({
-        originalName: f.originalname,
-        storedName: f.filename,
-            fileUrl: `/uploads/${f.filename}`,
-            mimetype: f.mimetype,
-          }))
+          originalName: f.originalname,
+          storedName: f.filename,
+          fileUrl: `/uploads/${f.filename}`,
+          mimetype: f.mimetype,
+        }))
         : [],
       // Safely handle image
       imageUrl: req.files && req.files['image'] && req.files['image'][0]
         ? `/uploads/${req.files['image'][0].filename}`
         : undefined,
     });
-    
+
     await project.save();
 
     await new Checkin({
@@ -154,13 +154,28 @@ router.put('/:id', auth, projectUpload, async (req, res) => {
     if (req.files?.image?.length) {
       project.imageUrl = `/uploads/${req.files.image[0].filename}`;
     }
-    
+
     console.log('Saving updated project:', project);
     await project.save();
     res.json(project);
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get all projects for a specific user
+router.get('/user/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const projects = await Project.find({ owner: userId })
+      .populate('owner', 'username firstName lastName profileImage')
+      .populate('members', 'username firstName lastName profileImage');
+    if (!projects) return res.status(404).json({ message: 'No projects found' });
+    res.json(projects);
+  } catch (err) {
+    console.error('Error fetching user projects:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 

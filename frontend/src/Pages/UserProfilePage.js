@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { userService, friendService } from "../services/api";
 import Nav from "../components/Nav";
 import Footer from "../components/footer";
+import { projectService } from "../services/api";
 import "../css/UserProfile.css";
 
 const UserProfilePage = () => {
@@ -10,6 +11,7 @@ const UserProfilePage = () => {
   const [user, setUser] = useState(null);
   const [isFriend, setIsFriend] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState([]);
   const [friendsOfFriend, setFriendsOfFriend] = useState([]);
   const navigate = useNavigate();
 
@@ -30,7 +32,7 @@ const UserProfilePage = () => {
             try {
               return await userService.getUserById(fid);
             } catch {
-              return null; 
+              return null;
             }
           })
         );
@@ -42,7 +44,7 @@ const UserProfilePage = () => {
           ...new Set(
             validFriends.flatMap((f) => f.friends || [])
           ),
-        ].filter((fid) => fid !== userId); 
+        ].filter((fid) => fid !== userId);
 
         const fofDetails = await Promise.all(
           fofIds.map(async (fid) => {
@@ -56,6 +58,30 @@ const UserProfilePage = () => {
 
         setFriendsOfFriend(fofDetails.filter(Boolean));
       }
+
+
+
+      if (isUserFriend) {
+        try {
+          let projectList = [];
+
+          // If userData already includes projects, use them
+          if (userData.projects && userData.projects.length) {
+            projectList = userData.projects;
+          } else {
+            // Otherwise, fetch from the API
+            projectList = await projectService.getProjectsByUser(userId);
+          }
+
+          setProjects(projectList);
+        } catch (err) {
+          console.error("Failed to fetch projects:", err);
+          setProjects([]);
+        }
+      } else {
+        setProjects([]); // Hide for non-friends
+      }
+
 
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -151,17 +177,17 @@ const UserProfilePage = () => {
                 </p>
               </div>
 
-              {/* Projects */}
-              <div style={{ marginTop: '1.5rem' }}>
+              {/*Projects Section */}
+              <div style={{ marginTop: "1.5rem" }}>
                 <h3 className="profile-section-title">Projects</h3>
-                {user.projects?.length ? (
+                {projects?.length ? (
                   <ul className="projects-grid">
-                    {user.projects.map((p, index) => (
+                    {projects.map((p, index) => (
                       <li
                         key={p._id || p.id || `project-${index}`}
                         className="project-card"
                       >
-                        <h4 className="project-title">{p.title}</h4>
+                        <h4 className="project-title">{p.name || p.title}</h4>
                         <p className="project-description">
                           {p.description || "No description provided."}
                         </p>

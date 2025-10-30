@@ -62,22 +62,25 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
     } finally {
       setLoading(false);
     }
-  }, [feedType, projects.map((p) => p._id).join(",")]);
+  }, [feedType, user, projects]);
 
   useEffect(() => {
     fetchActivities();
   }, [fetchActivities]);
 
-  // Sort handler
   const handleSortChange = (option) => {
     setSortOption(option);
-    if (option === "recent") {
-      setActivities((prev) =>
-        [...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      );
-    } else if (option === "popular") {
-      setActivities((prev) => [...prev].sort((a, b) => (b.likes || 0) - (a.likes || 0)));
-    }
+    setActivities((prev) => {
+      const sorted = [...prev];
+      if (option === "recent") {
+        // Newest first
+        sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      } else if (option === "oldest") {
+        // Oldest first
+        sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      }
+      return sorted;
+    });
   };
 
   const handleTagClick = (tag) => {
@@ -107,9 +110,7 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
         return;
       }
 
-      // Call service
       const resp = await friendService.sendFriendRequest(targetUser._id);
-
       setActivities((prev) =>
         prev.map((act) =>
           act.user && act.user._id && act.user._id.toString() === targetUser._id.toString()
@@ -120,7 +121,10 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
       alert(resp.message || `Friend request sent to ${targetUser.username || "user"}`);
     } catch (err) {
       console.error("Failed to send friend request:", err);
-      const serverMsg = err?.response?.data?.message || err?.message || "Error sending friend request";
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error sending friend request";
       alert(serverMsg);
     }
   };
@@ -178,7 +182,7 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
           <label>Sort by: </label>
           <select value={sortOption} onChange={(e) => handleSortChange(e.target.value)}>
             <option value="recent">Most Recent</option>
-            <option value="popular">Most Popular</option>
+            <option value="oldest">Oldest</option>
           </select>
         </div>
       </div>
@@ -221,7 +225,6 @@ const ActivityItem = ({ activity, onTagClick, onUserClick, onAddFriend, currentU
     <div className="activity-item">
       <div className="activity-header">
         <div className="user-info">
-
           <img
             src={
               targetUser.profileImage

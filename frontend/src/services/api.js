@@ -67,22 +67,22 @@ export const userService = {
 
   updateProfile: async (id, data, isFormData = false) => {
     const token = localStorage.getItem("token");
-  
+
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-  
+
 
     if (!isFormData) {
       headers["Content-Type"] = "application/json";
     }
-  
+
     const res = await fetch(`http://localhost:5000/api/users/${id}`, {
       method: "PUT",
       headers,
       body: isFormData ? data : JSON.stringify(data),
     });
-  
+
     if (!res.ok) throw new Error("Server error");
     return res.json();
   },
@@ -106,7 +106,7 @@ export const userService = {
     if (!res.ok) throw new Error("Failed to fetch user");
     return res.json();
   },
-  
+
 };
 
 // ====================== FRIEND SERVICE ======================
@@ -228,7 +228,7 @@ export const friendService = {
 
 // ====================== PROJECT SERVICE ======================
 export const projectService = {
-  
+
   getAllProjects: () => apiRequest('/projects'),
 
   getProject: (projectId) => apiRequest(`/projects/${projectId}`),
@@ -275,44 +275,53 @@ export const projectService = {
     return await response.json();
   },
 
-updateProject: async (project, token) => {
-  //  Validate input
-  const projectId = project._id || project.id;
-  if (!projectId) {
-    console.error("updateProject called without a valid ID:", project);
-    throw new Error("Project ID is missing.");
-  }
+  getProjectsByUser: async (userId) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE_URL}/projects/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to fetch user's projects");
+    return res.json();
+  },
 
-  console.log("updateProject received:", project._id);
-
-  //  Build form data
-  const formData = new FormData();
-  // Send the project data (excluding files and image) as JSON
-  const { newFiles, newImage, ...projectData } = project;
-  formData.append("project", JSON.stringify(projectData));
-
-
-  if (Array.isArray(newFiles) && newFiles.length > 0) {
-    newFiles.forEach(file => formData.append("files", file));
-  }
-
-  if (newImage) {
-    formData.append("image", newImage);
-  }
-
-  const res = await axios.put(
-    `${API_BASE_URL}/projects/${project._id}`,
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
+  updateProject: async (project, token) => {
+    //  Validate input
+    const projectId = project._id || project.id;
+    if (!projectId) {
+      console.error("updateProject called without a valid ID:", project);
+      throw new Error("Project ID is missing.");
     }
-  );
 
-  return res.data;
-},
+    console.log("updateProject received:", project._id);
+
+    //  Build form data
+    const formData = new FormData();
+    // Send the project data (excluding files and image) as JSON
+    const { newFiles, newImage, ...projectData } = project;
+    formData.append("project", JSON.stringify(projectData));
+
+
+    if (Array.isArray(newFiles) && newFiles.length > 0) {
+      newFiles.forEach(file => formData.append("files", file));
+    }
+
+    if (newImage) {
+      formData.append("image", newImage);
+    }
+
+    const res = await axios.put(
+      `${API_BASE_URL}/projects/${project._id}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return res.data;
+  },
 
 
   deleteProject: async (id) => {

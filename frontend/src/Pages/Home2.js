@@ -8,12 +8,21 @@ import Nav from "../components/Nav";
 import Sidebar from "../components/Sidebar";
 import "../css/Home.css";
 
+// Simple fuzzy match helper (handles incomplete / misspelled searches)
+const fuzzyMatch = (source, target) => {
+  if (!source || !target) return false;
+  const s = source.toLowerCase();
+  const t = target.toLowerCase();
+  return s.includes(t) || t.split("").every((ch) => s.includes(ch));
+};
+
 const Home = () => {
   const [feedType, setFeedType] = useState("local");
   const [projects, setProjects] = useState([]);
   const [allProjects, setAllProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { user } = useAuth();
@@ -24,11 +33,11 @@ const Home = () => {
         setLoading(true);
         setError("");
 
-        // ✅ Get all projects
+        // Fetch all projects
         const projectsData = await projectService.getAllProjects();
         setAllProjects(projectsData);
 
-        // ✅ Filter for local feed if required
+        // Local feed = only your and friends' projects
         if (feedType === "local" && user) {
           const friends = await friendService.getFriends();
           const friendIds = friends.map((f) => f._id);
@@ -44,10 +53,9 @@ const Home = () => {
           setProjects(projectsData);
         }
 
-        // ✅ Get all users
+        // Fetch all users
         const usersData = await userService.getAllUsers();
         setUsers(usersData);
-
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load data. Please try again.");
@@ -59,35 +67,84 @@ const Home = () => {
     fetchData();
   }, [feedType, user]);
 
-  // ✅ Search function
+  //  Main Search Logic
   const handleSearch = (query) => {
     setSearchQuery(query);
 
-    // Filter projects
-    const filteredProjects = allProjects.filter((project) => {
-      const searchLower = query.toLowerCase();
-      const messageMatch = project.message?.toLowerCase().includes(searchLower);
-      const typeMatch = project.projectType?.toLowerCase().includes(searchLower);
-      const hashtagMatch = project.hashtags?.some((tag) =>
-        tag.toLowerCase().includes(searchLower)
-      );
+    if (!query.trim()) {
+      setProjects(allProjects);
+      setSuggestions([]);
+      return;
+    }
 
-      return messageMatch || typeMatch || hashtagMatch;
+    const q = query.toLowerCase();
+
+    // 🔍 Search Projects
+    const filteredProjects = allProjects.filter((project) => {
+      const title = project.name?.toLowerCase() || "";
+      const desc = project.description?.toLowerCase() || "";
+      const tags = project.hashtags?.map((t) => t.toLowerCase()) || [];
+
+      return (
+        title.includes(q) ||
+        desc.includes(q) ||
+        tags.some((tag) => tag.includes(q)) ||
+        fuzzyMatch(title, q) ||
+        fuzzyMatch(desc, q)
+      );
     });
 
-    setProjects(filteredProjects);
+    // 👥 Search Users
+    const filteredUsers = users.filter((u) => {
+      const username = u.username?.toLowerCase() || "";
+      const name = u.name?.toLowerCase() || "";
+      return (
+        username.includes(q) ||
+        name.includes(q) ||
+        fuzzyMatch(username, q) ||
+        fuzzyMatch(name, q)
+      );
+    });
 
-    // Optional: Filter users (if you want to show user search results)
-    // const filteredUsers = users.filter((u) => {
-    //   const searchLower = query.toLowerCase();
-    //   return (
-    //     u.username.toLowerCase().includes(searchLower) ||
-    //     u.firstName.toLowerCase().includes(searchLower) ||
-    //     u.lastName.toLowerCase().includes(searchLower) ||
-    //     u.email?.toLowerCase().includes(searchLower)
-    //   );
-    // });
-    // setUsers(filteredUsers);
+    // 🧠 Autocomplete suggestions (top 5)
+    const projectSuggestions = filteredProjects.slice(0, 3).map((p) => ({
+      type: "project",
+      label: p.name,
+      id: p._id,
+    }));
+    const userSuggestions = filteredUsers.slice(0, 2).map((u) => ({
+      type: "user",
+      label: u.username || u.name,
+      id: u._id,
+    }));
+    setSuggestions([...userSuggestions, ...projectSuggestions]);
+
+    // Update feed with found projects
+    setProjects(filteredProjects);
+  };
+
+  // 🔁 Handle hashtag click
+  const handleHashtagSearch = (tag) => {
+    handleSearch(`#${tag}`);
+  };
+
+  //  Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion.label);
+    setSuggestions([]);
+    if (suggestion.type === "project") {
+      const selectedProject = allProjects.find((p) => p._id === suggestion.id);
+      if (selectedProject) setProjects([selectedProject]);
+    } else if (suggestion.type === "user") {
+      const selectedUser = users.find((u) => u._id === suggestion.id);
+      if (selectedUser) {
+        // filter projects by that user
+        const userProjects = allProjects.filter(
+          (p) => p.owner?._id === selectedUser._id
+        );
+        setProjects(userProjects);
+      }
+    }
   };
 
   if (loading) {
@@ -138,12 +195,27 @@ const Home = () => {
         <Sidebar />
 
         <div className="main-feed">
+          {/*  Search with autocomplete */}
           <div className="search-container">
             <SearchInput
-              placeholder="Search projects or users..."
+              placeholder="Search projects, users, or hashtags..."
               value={searchQuery}
               onChange={handleSearch}
             />
+            {suggestions.length > 0 && (
+              <ul className="autocomplete-list">
+                {suggestions.map((s, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleSuggestionClick(s)}
+                    className="autocomplete-item"
+                  >
+                    {s.type === "user" ? "👤 " : "📁 "}
+                    {s.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="feed-switcher">
@@ -164,7 +236,7 @@ const Home = () => {
             </div>
             <p className="feed-info">
               {feedType === "local"
-                ? "Showing activity from your projects"
+                ? "Showing activity from your friends’ projects"
                 : "Showing activity from all projects"}
             </p>
           </div>
@@ -173,7 +245,7 @@ const Home = () => {
             <Feed
               feedType={feedType}
               projects={projects}
-              onSearch={handleSearch}
+              onSearch={handleHashtagSearch}
               searchQuery={searchQuery}
             />
           </section>
