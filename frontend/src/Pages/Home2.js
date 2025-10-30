@@ -8,7 +8,6 @@ import Nav from "../components/Nav";
 import Sidebar from "../components/Sidebar";
 import "../css/Home.css";
 
-// Simple fuzzy match helper (handles incomplete / misspelled searches)
 const fuzzyMatch = (source, target) => {
   if (!source || !target) return false;
   const s = source.toLowerCase();
@@ -68,6 +67,7 @@ const Home = () => {
   }, [feedType, user]);
 
   //  Main Search Logic
+  // 🔍 Main Search Logic (only username + hashtags)
   const handleSearch = (query) => {
     setSearchQuery(query);
 
@@ -79,51 +79,55 @@ const Home = () => {
 
     const q = query.toLowerCase();
 
-    // 🔍 Search Projects
-    const filteredProjects = allProjects.filter((project) => {
-      const title = project.name?.toLowerCase() || "";
-      const desc = project.description?.toLowerCase() || "";
-      const tags = project.hashtags?.map((t) => t.toLowerCase()) || [];
-
-      return (
-        title.includes(q) ||
-        desc.includes(q) ||
-        tags.some((tag) => tag.includes(q)) ||
-        fuzzyMatch(title, q) ||
-        fuzzyMatch(desc, q)
-      );
-    });
-
-    // 👥 Search Users
+    // 👥 Search Users (username only)
     const filteredUsers = users.filter((u) => {
       const username = u.username?.toLowerCase() || "";
-      const name = u.name?.toLowerCase() || "";
-      return (
-        username.includes(q) ||
-        name.includes(q) ||
-        fuzzyMatch(username, q) ||
-        fuzzyMatch(name, q)
-      );
+      return username.includes(q) || fuzzyMatch(username, q);
     });
 
-    // 🧠 Autocomplete suggestions (top 5)
-    const projectSuggestions = filteredProjects.slice(0, 3).map((p) => ({
-      type: "project",
-      label: p.name,
-      id: p._id,
-    }));
-    const userSuggestions = filteredUsers.slice(0, 2).map((u) => ({
+    // 🏷️ Search Hashtags (from all projects)
+    const hashtagProjects = allProjects.filter((project) =>
+      project.hashtags?.some((tag) => tag.toLowerCase().includes(q.replace("#", "")))
+    );
+
+    // 🧠 Autocomplete suggestions (usernames + hashtags)
+    const userSuggestions = filteredUsers.slice(0, 3).map((u) => ({
       type: "user",
-      label: u.username || u.name,
+      label: u.username,
       id: u._id,
     }));
-    setSuggestions([...userSuggestions, ...projectSuggestions]);
 
-    // Update feed with found projects
-    setProjects(filteredProjects);
+    // collect unique hashtags
+    const hashtagSuggestions = [];
+    allProjects.forEach((project) => {
+      project.hashtags?.forEach((tag) => {
+        if (tag.toLowerCase().includes(q.replace("#", ""))) {
+          if (!hashtagSuggestions.some((h) => h.label === `#${tag}`)) {
+            hashtagSuggestions.push({
+              type: "hashtag",
+              label: `#${tag}`,
+            });
+          }
+        }
+      });
+    });
+
+    setSuggestions([...userSuggestions, ...hashtagSuggestions.slice(0, 3)]);
+
+    // 🎯 When user types a hashtag, update feed to show matching projects
+    if (q.startsWith("#")) {
+      setProjects(hashtagProjects);
+    } else {
+      // otherwise, show projects by user (owner)
+      const selectedUsernames = filteredUsers.map((u) => u._id);
+      const userProjects = allProjects.filter(
+        (p) => selectedUsernames.includes(p.owner?._id)
+      );
+      setProjects(userProjects);
+    }
   };
 
-  // 🔁 Handle hashtag click
+  //  Handle hashtag click
   const handleHashtagSearch = (tag) => {
     handleSearch(`#${tag}`);
   };

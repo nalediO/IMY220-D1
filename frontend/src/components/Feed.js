@@ -147,7 +147,6 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
     );
   }
 
-  // ================== SEARCH FILTER ==================
   const filteredActivities = activities.filter((activity) => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
@@ -158,7 +157,11 @@ const Feed = ({ feedType, projects = [], onSearch, searchQuery }) => {
       tag.toLowerCase().includes(searchLower)
     );
 
-    return messageMatch || typeMatch || hashtagMatch;
+    //Add username / name match
+    const usernameMatch = activity.user?.username?.toLowerCase().includes(searchLower);
+    const nameMatch = activity.user?.firstName?.toLowerCase().includes(searchLower);
+
+    return messageMatch || typeMatch || hashtagMatch || usernameMatch || nameMatch;
   });
 
   if (!filteredActivities || filteredActivities.length === 0) {
